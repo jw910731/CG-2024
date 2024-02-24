@@ -5,6 +5,7 @@
 	import vertexShader from "./vertex.glsl?raw";
 	import fragmentShader from "./fragment.glsl?raw";
 	import { tick } from "svelte";
+	import { mat2 } from "gl-matrix";
 
 	let canvasElem: HTMLCanvasElement;
 	let gl: WebGLRenderingContext;
@@ -13,7 +14,15 @@
 	onMount(async () => {
 		gl = canvasElem.getContext("webgl")!;
 		context = cgPrepare(gl, vertexShader, fragmentShader);
+		mat2.fromRotation(context.accMat, Math.PI);
 		cgRender(gl, context);
+		const update = () => {
+			const clone = mat2.clone(context.accMat);
+			mat2.rotate(context.accMat, clone, Math.PI * 0.01);
+			cgRender(gl, context);
+			requestAnimationFrame(update);
+		};
+		requestAnimationFrame(update);
 	});
 
 	let devicePixelRatio = 1;
@@ -42,7 +51,6 @@
 				canvasElem.height = height;
 				await tick();
 				cgRender(gl, context);
-				console.log(width, height);
 			}
 		})();
 </script>
