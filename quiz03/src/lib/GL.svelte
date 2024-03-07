@@ -1,13 +1,13 @@
 <script lang="ts">
 	import { onMount } from "svelte";
 	import { cgRender, cgPrepare } from "./GL";
-	import { type RenderContext, Color, Dot } from "./RenderContext";
+	import { type RenderContext } from "./RenderContext";
 	import vertexShader from "./vertex.hlsl?raw";
 	import fragmentShader from "./fragment.hlsl?raw";
 	import { tick } from "svelte";
 
 	let canvasElem: HTMLCanvasElement;
-	let gl: WebGLRenderingContext;
+	let gl: WebGL2RenderingContext;
 	let context: RenderContext;
 	const whcalc = () =>
 		Math.min(
@@ -36,31 +36,8 @@
 		context = cgPrepare(gl, vertexShader, fragmentShader);
 		cgRender(gl, context);
 	});
-
-	const mouseDonwHandler = (ev: MouseEvent) => {
-		const { left, top } = canvasElem.getClientRects()[0];
-		const { width, height } = canvasElem;
-		const normalize = (x: number, y: number) => [
-			((x - left) * 2) / width - 1,
-			-1 * (((y - top) * 2) / height - 1),
-		];
-		const color = (x: number, y: number) => {
-			if (x >= 0 && y >= 0) return Color.RED;
-			if (x >= 0 && y < 0) return Color.WHITE;
-			if (x < 0 && y >= 0) return Color.BLUE;
-			return Color.GREEN;
-		};
-		const [x, y] = normalize(ev.clientX, ev.clientY);
-		context.dots.push(new Dot(color(x, y), [x, y, 0, 1]));
-		cgRender(gl, context);
-	};
 </script>
 
 <svelte:window bind:innerHeight bind:innerWidth />
 
-<canvas
-	bind:this={canvasElem}
-	on:mousedown={mouseDonwHandler}
-	bind:clientHeight={height}
-	bind:clientWidth={width}
-/>
+<canvas bind:this={canvasElem} bind:clientHeight={height} bind:clientWidth={width} />

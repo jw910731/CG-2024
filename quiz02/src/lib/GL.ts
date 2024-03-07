@@ -1,16 +1,9 @@
-import type { Dot } from "./Dot";
+import type { RenderContext } from "./RenderContext";
 import { createShader, createProgram } from "./glutils";
 
 export interface GLAttribute {
 	location: number;
 	buffer: WebGLBuffer;
-}
-
-export interface RenderContext {
-	shaderProgram: WebGLProgram;
-	pos: WebGLUniformLocation;
-	color: WebGLUniformLocation;
-	dots: Dot[];
 }
 
 export function cgPrepare(
@@ -43,23 +36,5 @@ export function cgRender(gl: WebGLRenderingContext, context: RenderContext) {
 	gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
 	gl.useProgram(context.shaderProgram);
 
-	context.dots.forEach((dot) => {
-		// Prepare Uniform
-		gl.uniform4f(
-			context.pos,
-			dot.position[0],
-			dot.position[1],
-			dot.position[2],
-			dot.position[3]
-		);
-		gl.uniform4f(
-			context.color,
-			dot.color.color[0],
-			dot.color.color[1],
-			dot.color.color[2],
-			dot.color.color[3]
-		);
-
-		gl.drawArrays(gl.POINTS, 0, 1);
-	});
+	context.dots.forEach(dot => dot.draw(gl, context));
 }

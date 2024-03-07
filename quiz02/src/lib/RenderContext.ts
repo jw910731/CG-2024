@@ -1,6 +1,24 @@
-export interface Dot {
+export interface RenderContext {
+	shaderProgram: WebGLProgram;
+	pos: WebGLUniformLocation;
+	color: WebGLUniformLocation;
+	dots: Dot[];
+}
+
+export class Dot {
 	color: Color;
 	position: number[];
+	constructor(color: Color, position: number[]) {
+		this.color = color;
+		this.position = position;
+	}
+	draw(gl: WebGL2RenderingContext, context: RenderContext) {
+		// Prepare Uniform
+		gl.uniform4fv(context.pos, this.position);
+		gl.uniform4fv(context.color, this.color.color);
+
+		gl.drawArrays(gl.POINTS, 0, 1);
+	}
 }
 
 export class Color implements Iterable<number> {
