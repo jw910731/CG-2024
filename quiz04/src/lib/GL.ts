@@ -51,7 +51,6 @@ export function cgPrepare(
 }
 
 export function cgRender(gl: WebGL2RenderingContext, context: RenderContext) {
-	const stack: mat3[] = [];
 	// Clear Buffer
 	gl.clearColor(0, 0, 0, 1);
 	gl.clear(gl.COLOR_BUFFER_BIT);
@@ -65,7 +64,6 @@ export function cgRender(gl: WebGL2RenderingContext, context: RenderContext) {
 	context.triangles[0].draw(gl, context, globalMatrix);
 	mat3.translate(globalMatrix, globalMatrix,  vec2.fromValues(0, 0.2));
 	mat3.rotate(globalMatrix, globalMatrix, Math.PI * (context.secondAngle / 180));
-	stack.push(mat3.clone(globalMatrix));
 	mat3.scale(globalMatrix, globalMatrix, vec2.fromValues(1, 1 + context.secondScale));
 	context.triangles[1].draw(gl, context, globalMatrix);
 	mat3.translate(globalMatrix, globalMatrix, vec2.fromValues(0.1, -0.5));
