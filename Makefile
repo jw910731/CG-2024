@@ -8,5 +8,10 @@ quiz%.zip: quiz%
 	git archive HEAD -o $@ $<
 
 .PHONY:
+hw%.zip: hw%
+	git archive HEAD -o $@ $<
+	zip -ur $@ $</build
+
+.PHONY:
 clean:
 	rm -rf *.zip
