@@ -7,23 +7,37 @@ import type { Vec2Like } from "neon-matrix/dist/src/Vec2";
 export abstract class BaseShape {
 	protected context: RenderContext;
 	private modelMat: Mat3 = new Mat3();
+	private _refreshVertex: boolean = true;
 	constructor(context: RenderContext) {
 		this.context = context;
 	}
 	// prepare basic data
+	private vertexCache: number[][] = [];
+	private prevMat = this.mat.copy();
 	draw(): void {
+		if (!Mat3.equals(this.prevMat, this.mat)) {
+			this._refreshVertex = true;
+			this.prevMat = this.mat.copy();
+		}
 		const { colorAttr, vertexAttr } = this.context;
 		colorAttr.prepareData(
 			this.color.map((c) => c.color),
 			4
 		);
-		vertexAttr.prepareData(this.verticies, 2);
+		if (this.vertexCache.length <= 0 || this._refreshVertex) {
+			this._refreshVertex = false;
+			this.vertexCache = this.verticies;
+		}
+		vertexAttr.prepareData(this.vertexCache, 2);
 	}
 	keyDown(key: KeyboardEvent) {
 		key;
 	}
 	public get mat(): Mat3 {
 		return this.modelMat;
+	}
+	protected get refreshVertex(): boolean {
+		return this._refreshVertex;
 	}
 	protected abstract get color(): Color[];
 	protected abstract get verticies(): number[][];
@@ -72,12 +86,11 @@ export class Circle extends BaseShape {
 			.filter((e) => e instanceof GLAttribute)
 			.map((e) => e.enable());
 		gl.drawArrays(gl.TRIANGLE_FAN, 0, this.granularity * 2);
-		this.roundGranularity = -1;
 	}
 
 	private roundGranularity = -1;
 	private get granularity(): number {
-		if (this.roundGranularity == -1) {
+		if (this.refreshVertex) {
 			const samples = 10;
 			const size =
 				Array(samples)
@@ -127,11 +140,13 @@ export class DockerShape extends BaseShape {
 			((1 - t) * ((1 - t) * ((1 - t) * 12 + t * 10) + t * ((1 - t) * 10 + t * -3)) +
 				t * ((1 - t) * ((1 - t) * 10 + t * -3) + t * ((1 - t) * -3 + t * 0)) -
 				5.6) /
-				6.45 - 0.0273,
+				6.45 -
+				0.0273,
 			((1 - t) * ((1 - t) * ((1 - t) * 8 + t * 4) + t * ((1 - t) * 4 + t * 2)) +
 				t * ((1 - t) * ((1 - t) * 4 + t * 2) + t * ((1 - t) * 2 + t * 8)) -
 				6) /
-				6.45 - 0.01682,
+				6.45 -
+				0.01682,
 		];
 	}
 
