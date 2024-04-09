@@ -1,6 +1,6 @@
 /* eslint-disable no-case-declarations */
 
-import { Vec2Like } from "./Vec2";
+import { Vec2, Vec2Like } from "./Vec2";
 import { EPSILON } from "./common";
 
 // prettier-ignore
@@ -625,5 +625,12 @@ export class Mat3 extends Float32Array {
 			Math.abs(a7 - b7) <= EPSILON * Math.max(1, Math.abs(a7), Math.abs(b7)) &&
 			Math.abs(a8 - b8) <= EPSILON * Math.max(1, Math.abs(a8), Math.abs(b8))
 		);
+	}
+
+	multiplyVec(v: Readonly<Vec2Like>): Vec2Like {
+		const ret = <Vec2Like>structuredClone(v);
+		ret[0] = this[0] * v[0] + this[3] * v[1] + this[6];
+		ret[1] = this[1] * v[0] + this[4] * v[1] + this[7];
+		return ret;
 	}
 }
