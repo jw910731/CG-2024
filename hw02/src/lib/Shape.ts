@@ -114,3 +114,61 @@ export class Circle extends BaseShape {
 			.map((v) => <[number, number]>this.mat.multiplyVec(<Vec2Like>v));
 	}
 }
+
+export class DockerShape extends BaseShape {
+	private readonly currentColor: Color;
+	constructor(context: RenderContext, color: Color) {
+		super(context);
+		this.currentColor = color;
+	}
+
+	private bezier(t: number): [number, number] {
+		return [
+			((1 - t) * ((1 - t) * ((1 - t) * 12 + t * 10) + t * ((1 - t) * 10 + t * -3)) +
+				t * ((1 - t) * ((1 - t) * 10 + t * -3) + t * ((1 - t) * -3 + t * 0)) -
+				6) /
+				12,
+			((1 - t) * ((1 - t) * ((1 - t) * 8 + t * 4) + t * ((1 - t) * 4 + t * 2)) +
+				t * ((1 - t) * ((1 - t) * 4 + t * 2) + t * ((1 - t) * 2 + t * 8)) -
+				6) /
+				12,
+		];
+	}
+
+	private maxBezierDerivative(t: number): number {
+		return Math.max(
+			6 * (-(t - 1) * 12 + (3 * t - 2) * 10 - 3 * t * -3 + t * 0 + -3),
+			-6 * ((t - 1) * 8 + (2 - 3 * t) * 4 + 3 * t * 2 - t * 8 - 2)
+		);
+	}
+
+	draw(): void {
+		super.draw();
+		const { gl } = this.context;
+		Object.values(this.context)
+			.filter((e) => e instanceof GLAttribute)
+			.map((e) => e.enable());
+		gl.drawArrays(gl.TRIANGLE_FAN, 0, this.curveVert.length);
+		this.vertCache = [];
+	}
+
+	private vertCache: [number, number][] = [];
+	private get curveVert(): [number, number][] {
+		if (this.vertCache.length == 0) {
+			let stride = 0;
+			for (let t = 0; t < 1; t += stride) {
+				stride = Math.max(0.01, 1 / this.maxBezierDerivative(t));
+				this.vertCache.push(this.bezier(t));
+			}
+		}
+		return this.vertCache;
+	}
+
+	protected get color(): Color[] {
+		return Array(this.curveVert.flat().length).fill(this.currentColor);
+	}
+
+	protected get verticies(): number[][] {
+		return this.vertCache.map((v) => <[number, number]>this.mat.multiplyVec(<Vec2Like>v));
+	}
+}
