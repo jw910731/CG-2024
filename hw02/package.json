@@ -33,6 +33,6 @@
 	},
 	"type": "module",
 	"dependencies": {
-		"neon-matrix": "file:../neon-matrix"
+		"neon-matrix": "link:/Users/jw910731/dev/git/CG-2024/neon-matrix"
 	}
 }

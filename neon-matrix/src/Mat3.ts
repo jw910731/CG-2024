@@ -1,6 +1,6 @@
 /* eslint-disable no-case-declarations */
 
-import { Vec2, Vec2Like } from "./Vec2";
+import { Vec2Like } from "./Vec2";
 import { EPSILON } from "./common";
 
 // prettier-ignore

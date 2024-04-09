@@ -6,8 +6,8 @@ settings:
 
 dependencies:
   neon-matrix:
-    specifier: file:../neon-matrix
-    version: file:../neon-matrix
+    specifier: link:/Users/jw910731/dev/git/CG-2024/neon-matrix
+    version: link:../neon-matrix
 
 devDependencies:
   '@sveltejs/adapter-auto':
@@ -2100,8 +2100,3 @@ packages:
     resolution: {integrity: sha512-rVksvsnNCdJ/ohGc6xgPwyN8eheCxsiLM8mxuE/t/mOVqJewPuO1miLpTHQiRgTKCLexL4MeAFVagts7HmNZ2Q==}
     engines: {node: '>=10'}
     dev: true
-
-  file:../neon-matrix:
-    resolution: {directory: ../neon-matrix, type: directory}
-    name: neon-matrix
-    dev: false
