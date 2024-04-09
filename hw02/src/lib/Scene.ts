@@ -1,4 +1,4 @@
-import { Mat3 } from "neon-matrix";
+import { Color } from "./Color";
 import { GLAttribute } from "./GLAttribute";
 import { SceneOptions, type RenderContext, Transform } from "./RenderContext";
 import { Circle, type BaseShape } from "./Shape";
@@ -23,7 +23,8 @@ export class Scene {
 		};
 
 		// init shape
-		this.shapeContainer.push(new Circle(this.context));
+		this.shapeContainer.push();
+
 		this.trans = new Transform();
 	}
 	render() {
