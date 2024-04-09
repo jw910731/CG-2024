@@ -29,6 +29,35 @@ export abstract class BaseShape {
 	protected abstract get verticies(): number[][];
 }
 
+export class Rectangle extends BaseShape {
+	private readonly currentColor: Color;
+	constructor(context: RenderContext, color: Color) {
+		super(context);
+		this.currentColor = color;
+	}
+
+	draw(): void {
+		super.draw();
+		const { gl } = this.context;
+		Object.values(this.context)
+			.filter((e) => e instanceof GLAttribute)
+			.map((e) => e.enable());
+		gl.drawArrays(gl.TRIANGLE_FAN, 0, 4);
+	}
+
+	protected get color(): Color[] {
+		return Array(4).fill(this.currentColor);
+	}
+	protected get verticies(): number[][] {
+		return [
+			[1, 1],
+			[-1, 1],
+			[-1, -1],
+			[1, -1],
+		].map((v) => <[number, number]>this.mat.multiplyVec(<Vec2Like>v));
+	}
+}
+
 export class Circle extends BaseShape {
 	private readonly currentColor: Color;
 	constructor(context: RenderContext, color: Color) {
