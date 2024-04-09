@@ -1,5 +1,4 @@
 import { EPSILON } from "./common";
-import { Mat3Like } from "./Mat3";
 
 /**
  * A 2 dimensional vector given as a {@link Vec2}, a 2-element Float32Array, or
@@ -151,7 +150,7 @@ export class Vec2 extends Float32Array {
 	 * @returns `this`
 	 */
 	copy(a: Readonly<Vec2Like>): Vec2 {
-		this.set(a);
+		this.copy(a);
 		return this;
 	}
 
@@ -236,28 +235,6 @@ export class Vec2 extends Float32Array {
 	}
 
 	/**
-	 * Calculates the euclidian distance between another {@link Vec2} and `this`.
-	 * Equivalent to `Vec2.distance(this, b);`
-	 *
-	 * @param b - The vector to calculate the distance to
-	 * @returns Distance between `this` and `b`
-	 */
-	distance(b: Readonly<Vec2Like>): number {
-		return Vec2.distance(this, b);
-	}
-
-	/**
-	 * Calculates the squared euclidian distance between another {@link Vec2} and `this`.
-	 * Equivalent to `Vec2.squaredDistance(this, b);`
-	 *
-	 * @param b The vector to calculate the squared distance to
-	 * @returns Squared distance between `this` and `b`
-	 */
-	squaredDistance(b: Readonly<Vec2Like>): number {
-		return Vec2.squaredDistance(this, b);
-	}
-
-	/**
 	 * Negates the components of `this`.
 	 * Equivalent to `Vec2.negate(this, this);`
 	 *
@@ -281,41 +258,9 @@ export class Vec2 extends Float32Array {
 		return this;
 	}
 
-	/**
-	 * Calculates the dot product of this and another {@link Vec2}.
-	 * Equivalent to `Vec2.dot(this, b);`
-	 *
-	 * @param b - The second operand
-	 * @returns Dot product of `this` and `b`
-	 */
-	dot(b: Readonly<Vec2Like>): number {
-		return this[0] * b[0] + this[1] * b[1];
-	}
-
-	/**
-	 * Normalize `this`.
-	 * Equivalent to `Vec2.normalize(this, this);`
-	 *
-	 * @returns `this`
-	 */
-	normalize(): Vec2 {
-		return Vec2.normalize(this, this) as Vec2;
-	}
-
 	//================
 	// Static methods
 	//================
-
-	/**
-	 * Creates a new, empty {@link Vec2}
-	 * @category Static
-	 *
-	 * @returns A new 2D vector
-	 */
-	static create(): Vec2 {
-		return new Vec2();
-	}
-
 	/**
 	 * Creates a new {@link Vec2} initialized with values from an existing vector
 	 * @category Static
@@ -354,80 +299,6 @@ export class Vec2 extends Float32Array {
 	}
 
 	/**
-	 * Set the components of a {@link Vec2} to the given values
-	 * @category Static
-	 *
-	 * @param out - The receiving vector
-	 * @param x - X component
-	 * @param y - Y component
-	 * @returns `out`
-	 */
-	static set(out: Vec2Like, x: number, y: number): Vec2Like {
-		out[0] = x;
-		out[1] = y;
-		return out;
-	}
-
-	/**
-	 * Adds two {@link Vec2}s
-	 * @category Static
-	 *
-	 * @param out - The receiving vector
-	 * @param a - The first operand
-	 * @param b - The second operand
-	 * @returns `out`
-	 */
-	static add(out: Vec2Like, a: Readonly<Vec2Like>, b: Readonly<Vec2Like>): Vec2Like {
-		out[0] = a[0] + b[0];
-		out[1] = a[1] + b[1];
-		return out;
-	}
-
-	/**
-	 * Subtracts vector b from vector a
-	 * @category Static
-	 *
-	 * @param out - The receiving vector
-	 * @param a - The first operand
-	 * @param b - The second operand
-	 * @returns `out`
-	 */
-	static subtract(out: Vec2Like, a: Readonly<Vec2Like>, b: Readonly<Vec2Like>): Vec2Like {
-		out[0] = a[0] - b[0];
-		out[1] = a[1] - b[1];
-		return out;
-	}
-	/**
-	 * Multiplies two {@link Vec2}s
-	 * @category Static
-	 *
-	 * @param out - The receiving vector
-	 * @param a - The first operand
-	 * @param b - The second operand
-	 * @returns `out`
-	 */
-	static multiply(out: Vec2Like, a: Readonly<Vec2Like>, b: Readonly<Vec2Like>): Vec2Like {
-		out[0] = a[0] * b[0];
-		out[1] = a[1] * b[1];
-		return out;
-	}
-
-	/**
-	 * Divides two {@link Vec2}s
-	 * @category Static
-	 *
-	 * @param out - The receiving vector
-	 * @param a - The first operand
-	 * @param b - The second operand
-	 * @returns `out`
-	 */
-	static divide(out: Vec2Like, a: Readonly<Vec2Like>, b: Readonly<Vec2Like>): Vec2Like {
-		out[0] = a[0] / b[0];
-		out[1] = a[1] / b[1];
-		return out;
-	}
-
-	/**
 	 * Math.ceil the components of a {@link Vec2}
 	 * @category Static
 	 *
@@ -435,10 +306,10 @@ export class Vec2 extends Float32Array {
 	 * @param a - Vector to ceil
 	 * @returns `out`
 	 */
-	static ceil(out: Vec2Like, a: Readonly<Vec2Like>): Vec2Like {
-		out[0] = Math.ceil(a[0]);
-		out[1] = Math.ceil(a[1]);
-		return out;
+	ceil(): Vec2Like {
+		this[0] = Math.ceil(this[0]);
+		this[1] = Math.ceil(this[1]);
+		return this;
 	}
 
 	/**
@@ -449,10 +320,10 @@ export class Vec2 extends Float32Array {
 	 * @param a - Vector to floor
 	 * @returns `out`
 	 */
-	static floor(out: Vec2Like, a: Readonly<Vec2Like>): Vec2Like {
-		out[0] = Math.floor(a[0]);
-		out[1] = Math.floor(a[1]);
-		return out;
+	floor(): Vec2 {
+		this[0] = Math.floor(this[0]);
+		this[1] = Math.floor(this[1]);
+		return this;
 	}
 
 	/**
@@ -464,10 +335,11 @@ export class Vec2 extends Float32Array {
 	 * @param b - The second operand
 	 * @returns `out`
 	 */
-	static min(out: Vec2Like, a: Readonly<Vec2Like>, b: Readonly<Vec2Like>): Vec2Like {
-		out[0] = Math.min(a[0], b[0]);
-		out[1] = Math.min(a[1], b[1]);
-		return out;
+	min(b: Readonly<Vec2Like>): Vec2Like {
+		const ret = <Vec2Like>structuredClone(this);
+		ret[0] = Math.min(this[0], b[0]);
+		ret[1] = Math.min(this[1], b[1]);
+		return ret;
 	}
 
 	/**
@@ -479,60 +351,24 @@ export class Vec2 extends Float32Array {
 	 * @param b - The second operand
 	 * @returns `out`
 	 */
-	static max(out: Vec2Like, a: Readonly<Vec2Like>, b: Readonly<Vec2Like>): Vec2Like {
-		out[0] = Math.max(a[0], b[0]);
-		out[1] = Math.max(a[1], b[1]);
-		return out;
+	max(b: Readonly<Vec2Like>): Vec2Like {
+		const ret = <Vec2Like>structuredClone(this);
+		ret[0] = Math.max(this[0], b[0]);
+		ret[1] = Math.max(this[1], b[1]);
+		return ret;
 	}
 
 	/**
 	 * Math.round the components of a {@link Vec2}
-	 * @category Static
 	 *
 	 * @param out - The receiving vector
 	 * @param a - Vector to round
 	 * @returns `out`
 	 */
-	static round(out: Vec2Like, a: Readonly<Vec2Like>): Vec2Like {
-		out[0] = Math.round(a[0]);
-		out[1] = Math.round(a[1]);
-		return out;
-	}
-
-	/**
-	 * Scales a {@link Vec2} by a scalar number
-	 * @category Static
-	 *
-	 * @param out - The receiving vector
-	 * @param a - The vector to scale
-	 * @param b - Amount to scale the vector by
-	 * @returns `out`
-	 */
-	static scale(out: Vec2Like, a: Readonly<Vec2Like>, b: number): Vec2Like {
-		out[0] = a[0] * b;
-		out[1] = a[1] * b;
-		return out;
-	}
-
-	/**
-	 * Adds two Vec2's after scaling the second operand by a scalar value
-	 * @category Static
-	 *
-	 * @param out - The receiving vector
-	 * @param a - The first operand
-	 * @param b - The second operand
-	 * @param scale - The amount to scale b by before adding
-	 * @returns `out`
-	 */
-	static scaleAndAdd(
-		out: Vec2Like,
-		a: Readonly<Vec2Like>,
-		b: Readonly<Vec2Like>,
-		scale: number
-	): Vec2Like {
-		out[0] = a[0] + b[0] * scale;
-		out[1] = a[1] + b[1] * scale;
-		return out;
+	round(): Vec2Like {
+		this[0] = Math.round(this[0]);
+		this[1] = Math.round(this[1]);
+		return this;
 	}
 
 	/**
@@ -543,8 +379,8 @@ export class Vec2 extends Float32Array {
 	 * @param b - The second operand
 	 * @returns distance between `a` and `b`
 	 */
-	static distance(a: Readonly<Vec2Like>, b: Readonly<Vec2Like>): number {
-		return Math.hypot(b[0] - a[0], b[1] - a[1]);
+	distance(b: Readonly<Vec2Like>): number {
+		return Math.hypot(b[0] - this[0], b[1] - this[1]);
 	}
 
 	/**
@@ -555,9 +391,9 @@ export class Vec2 extends Float32Array {
 	 * @param b - The second operand
 	 * @returns Squared distance between `a` and `b`
 	 */
-	static squaredDistance(a: Readonly<Vec2Like>, b: Readonly<Vec2Like>): number {
-		const x = b[0] - a[0];
-		const y = b[1] - a[1];
+	squaredDistance(b: Readonly<Vec2Like>): number {
+		const x = b[0] - this[0];
+		const y = b[1] - this[1];
 		return x * x + y * y;
 	}
 	/**
@@ -587,34 +423,6 @@ export class Vec2 extends Float32Array {
 	}
 
 	/**
-	 * Negates the components of a {@link Vec2}
-	 * @category Static
-	 *
-	 * @param out - The receiving vector
-	 * @param a - Vector to negate
-	 * @returns `out`
-	 */
-	static negate(out: Vec2Like, a: Readonly<Vec2Like>) {
-		out[0] = -a[0];
-		out[1] = -a[1];
-		return out;
-	}
-
-	/**
-	 * Returns the inverse of the components of a {@link Vec2}
-	 * @category Static
-	 *
-	 * @param out - The receiving vector
-	 * @param a - Vector to invert
-	 * @returns `out`
-	 */
-	static inverse(out: Vec2Like, a: Readonly<Vec2Like>): Vec2Like {
-		out[0] = 1.0 / a[0];
-		out[1] = 1.0 / a[1];
-		return out;
-	}
-
-	/**
 	 * Normalize a {@link Vec2}
 	 * @category Static
 	 *
@@ -622,17 +430,17 @@ export class Vec2 extends Float32Array {
 	 * @param a - Vector to normalize
 	 * @returns `out`
 	 */
-	static normalize(out: Vec2Like, a: Readonly<Vec2Like>): Vec2Like {
-		const x = a[0];
-		const y = a[1];
+	normalize(): Vec2Like {
+		const x = this[0];
+		const y = this[1];
 		let len = x * x + y * y;
 		if (len > 0) {
 			//TODO: evaluate use of glm_invsqrt here?
 			len = 1 / Math.sqrt(len);
 		}
-		out[0] = a[0] * len;
-		out[1] = a[1] * len;
-		return out;
+		this[0] = this[0] * len;
+		this[1] = this[1] * len;
+		return this;
 	}
 
 	/**
@@ -643,26 +451,21 @@ export class Vec2 extends Float32Array {
 	 * @param b - The second operand
 	 * @returns Dot product of `a` and `b`
 	 */
-	static dot(a: Readonly<Vec2Like>, b: Readonly<Vec2Like>): number {
-		return a[0] * b[0] + a[1] * b[1];
+	dot(b: Readonly<Vec2Like>): number {
+		return this[0] * b[0] + this[1] * b[1];
 	}
 
 	/**
 	 * Computes the cross product of two {@link Vec2}s
 	 * Note that the cross product must by definition produce a 3D vector.
 	 * For this reason there is also not instance equivalent for this function.
-	 * @category Static
 	 *
-	 * @param out - The receiving vector
-	 * @param a - The first operand
 	 * @param b - The second operand
 	 * @returns `out`
 	 */
-	static cross(out: Vec2Like, a: Readonly<Vec2Like>, b: Readonly<Vec2Like>): Vec2Like {
-		const z = a[0] * b[1] - a[1] * b[0];
-		out[0] = out[1] = 0;
-		out[2] = z;
-		return out;
+	cross(b: Readonly<Vec2Like>): number {
+		const z = this[0] * b[1] - this[1] * b[0];
+		return z;
 	}
 
 	/**
@@ -684,25 +487,7 @@ export class Vec2 extends Float32Array {
 	}
 
 	/**
-	 * Transforms the {@link Vec2} with a {@link Mat3}
-	 * 3rd vector component is implicitly '1'
-	 *
-	 * @param out - The receiving vector
-	 * @param a - The vector to transform
-	 * @param m - Matrix to transform with
-	 * @returns `out`
-	 */
-	static transformMat3(out: Vec2Like, a: Readonly<Vec2Like>, m: Readonly<Mat3Like>): Vec2Like {
-		const x = a[0];
-		const y = a[1];
-		out[0] = m[0] * x + m[3] * y + m[6];
-		out[1] = m[1] * x + m[4] * y + m[7];
-		return out;
-	}
-
-	/**
 	 * Rotate a 2D vector
-	 * @category Static
 	 *
 	 * @param out - The receiving {@link Vec2}
 	 * @param a - The {@link Vec2} point to rotate
@@ -710,36 +495,30 @@ export class Vec2 extends Float32Array {
 	 * @param rad - The angle of rotation in radians
 	 * @returns `out`
 	 */
-	static rotate(
-		out: Vec2Like,
-		a: Readonly<Vec2Like>,
-		b: Readonly<Vec2Like>,
-		rad: number
-	): Vec2Like {
+	rotate(b: Readonly<Vec2Like>, rad: number): Vec2Like {
 		//Translate point to the origin
-		const p0 = a[0] - b[0];
-		const p1 = a[1] - b[1];
+		const p0 = this[0] - b[0];
+		const p1 = this[1] - b[1];
 		const sinC = Math.sin(rad);
 		const cosC = Math.cos(rad);
 
 		//perform rotation and translate to correct position
-		out[0] = p0 * cosC - p1 * sinC + b[0];
-		out[1] = p0 * sinC + p1 * cosC + b[1];
+		this[0] = p0 * cosC - p1 * sinC + b[0];
+		this[1] = p0 * sinC + p1 * cosC + b[1];
 
-		return out;
+		return this;
 	}
 
 	/**
 	 * Get the angle between two 2D vectors
-	 * @category Static
 	 *
 	 * @param a - The first operand
 	 * @param b - The second operand
 	 * @returns The angle in radians
 	 */
-	static angle(a: Readonly<Vec2Like>, b: Readonly<Vec2Like>): number {
-		const x1 = a[0];
-		const y1 = a[1];
+	angle(b: Readonly<Vec2Like>): number {
+		const x1 = this[0];
+		const y1 = this[1];
 		const x2 = b[0];
 		const y2 = b[1];
 		// mag is the product of the magnitudes of a and b
@@ -805,4 +584,3 @@ export class Vec2 extends Float32Array {
 		return `Vec2(${a.join(", ")})`;
 	}
 }
-
