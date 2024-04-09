@@ -633,4 +633,31 @@ export class Mat3 extends Float32Array {
 		ret[1] = this[1] * v[0] + this[4] * v[1] + this[7];
 		return ret;
 	}
+
+	invert(): Mat3 {
+		const a00 = this[0],
+			a01 = this[1],
+			a02 = this[2];
+		const a10 = this[3],
+			a11 = this[4],
+			a12 = this[5];
+		const a20 = this[6],
+			a21 = this[7],
+			a22 = this[8];
+		const b01 = a22 * a11 - a12 * a21;
+		const b11 = -a22 * a10 + a12 * a20;
+		const b21 = a21 * a10 - a11 * a20;
+		// Calculate the determinant
+		const det = 1.0 / (a00 * b01 + a01 * b11 + a02 * b21);
+		this[0] = b01 * det;
+		this[1] = (-a22 * a01 + a02 * a21) * det;
+		this[2] = (a12 * a01 - a02 * a11) * det;
+		this[3] = b11 * det;
+		this[4] = (a22 * a00 - a02 * a20) * det;
+		this[5] = (-a12 * a00 + a02 * a10) * det;
+		this[6] = b21 * det;
+		this[7] = (-a21 * a00 + a01 * a20) * det;
+		this[8] = (a11 * a00 - a01 * a10) * det;
+		return this;
+	}
 }
