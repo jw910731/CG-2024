@@ -99,21 +99,18 @@ export class Circle extends BaseShape {
 	}
 
 	protected get verticies(): number[][] {
-		return [
-			[...Array(this.granularity).keys()]
-				.map((e) => {
-					const [v1, v2] = [
-						Math.PI * (e / (this.granularity / 2)),
-						Math.PI * ((e + 1) / (this.granularity / 2)),
-					];
-					return [
-						[Math.cos(v1), Math.sin(v1)],
-						[Math.cos(v2), Math.sin(v2)],
-					];
-				})
-				.flat()
-				.map((v) => <[number, number]>this.mat.multiplyVec(<Vec2Like>v))
-				.flat(),
-		];
+		return [...Array(this.granularity).keys()]
+			.map((e) => {
+				const [v1, v2] = [
+					Math.PI * (e / (this.granularity / 2)),
+					Math.PI * ((e + 1) / (this.granularity / 2)),
+				];
+				return [
+					[Math.cos(v1), Math.sin(v1)],
+					[Math.cos(v2), Math.sin(v2)],
+				];
+			})
+			.flat()
+			.map((v) => <[number, number]>this.mat.multiplyVec(<Vec2Like>v));
 	}
 }
