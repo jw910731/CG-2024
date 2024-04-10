@@ -1,8 +1,8 @@
 import { Mat3, Vec2 } from "neon-matrix";
+import type { Vec2Like } from "neon-matrix/dist/src/Vec2";
 import { Color } from "./Color";
 import { GLAttribute } from "./GLAttribute";
 import type { RenderContext } from "./RenderContext";
-import type { Vec2Like } from "neon-matrix/dist/src/Vec2";
 
 export abstract class BaseShape {
 	protected context: RenderContext;
@@ -12,7 +12,7 @@ export abstract class BaseShape {
 		this.context = context;
 	}
 	// prepare basic data
-	private vertexCache: number[][] = [];
+	private vertexCache: [number, number][] = [];
 	private prevMat = this.mat.copy();
 	draw(): void {
 		if (!Mat3.equals(this.prevMat, this.mat)) {
@@ -26,7 +26,9 @@ export abstract class BaseShape {
 		);
 		if (this.vertexCache.length <= 0 || this._refreshVertex) {
 			this._refreshVertex = false;
-			this.vertexCache = this.verticies;
+			this.vertexCache = this.verticies.map(
+				(v) => <[number, number]>this.mat.multiplyVec(<Vec2Like>v)
+			);
 		}
 		vertexAttr.prepareData(this.vertexCache, 2);
 	}
@@ -36,15 +38,27 @@ export abstract class BaseShape {
 	public get mat(): Mat3 {
 		return this.modelMat;
 	}
+
+	public get invM(): Mat3 {
+		return this.mat.copy().invert();
+	}
+
 	protected get refreshVertex(): boolean {
 		return this._refreshVertex;
 	}
 	protected abstract get color(): Color[];
-	protected abstract get verticies(): number[][];
+	protected abstract get verticies(): [number, number][];
+	get joints(): [number, number][] {
+		if (this.vertexCache.length <= 0 || this._refreshVertex) {
+			this._refreshVertex = false;
+			this.vertexCache = this.verticies.map((v) => <[number, number]>this.mat.multiplyVec(v));
+		}
+		return [this.vertexCache[0], this.vertexCache[this.vertexCache.length - 1]];
+	}
 }
 
 export class Rectangle extends BaseShape {
-	private readonly currentColor: Color;
+	currentColor: Color;
 	constructor(context: RenderContext, color: Color) {
 		super(context);
 		this.currentColor = color;
@@ -59,21 +73,25 @@ export class Rectangle extends BaseShape {
 		gl.drawArrays(gl.TRIANGLE_FAN, 0, 4);
 	}
 
+	get joints(): [number, number][] {
+		return this.verticies;
+	}
+
 	protected get color(): Color[] {
 		return Array(4).fill(this.currentColor);
 	}
-	protected get verticies(): number[][] {
+	protected get verticies(): [number, number][] {
 		return [
 			[1, 1],
 			[-1, 1],
 			[-1, -1],
 			[1, -1],
-		].map((v) => <[number, number]>this.mat.multiplyVec(<Vec2Like>v));
+		];
 	}
 }
 
 export class Circle extends BaseShape {
-	private readonly currentColor: Color;
+	currentColor: Color;
 	constructor(context: RenderContext, color: Color) {
 		super(context);
 		this.currentColor = color;
@@ -111,25 +129,24 @@ export class Circle extends BaseShape {
 		return Array(this.granularity * 2).fill(this.currentColor);
 	}
 
-	protected get verticies(): number[][] {
+	protected get verticies(): [number, number][] {
 		return [...Array(this.granularity).keys()]
 			.map((e) => {
 				const [v1, v2] = [
 					Math.PI * (e / (this.granularity / 2)),
 					Math.PI * ((e + 1) / (this.granularity / 2)),
 				];
-				return [
+				return <[number, number][]>[
 					[Math.cos(v1), Math.sin(v1)],
 					[Math.cos(v2), Math.sin(v2)],
 				];
 			})
-			.flat()
-			.map((v) => <[number, number]>this.mat.multiplyVec(<Vec2Like>v));
+			.flat();
 	}
 }
 
 export class DockerShape extends BaseShape {
-	private readonly currentColor: Color;
+	currentColor: Color;
 	constructor(context: RenderContext, color: Color) {
 		super(context);
 		this.currentColor = color;
@@ -164,14 +181,13 @@ export class DockerShape extends BaseShape {
 			.filter((e) => e instanceof GLAttribute)
 			.map((e) => e.enable());
 		gl.drawArrays(gl.TRIANGLE_FAN, 0, this.curveVert.length);
-		this.vertCache = [];
 	}
 
 	private vertCache: [number, number][] = [];
 	private get curveVert(): [number, number][] {
 		if (this.vertCache.length == 0) {
 			let stride = 0;
-			for (let t = 0; t < 1; t += stride) {
+			for (let t = 0; t <= 1; t += stride) {
 				stride = Math.max(0.01, 1 / this.maxBezierDerivative(t));
 				this.vertCache.push(this.bezier(t));
 			}
@@ -183,7 +199,40 @@ export class DockerShape extends BaseShape {
 		return Array(this.curveVert.flat().length).fill(this.currentColor);
 	}
 
-	protected get verticies(): number[][] {
-		return this.vertCache.map((v) => <[number, number]>this.mat.multiplyVec(<Vec2Like>v));
+	protected get verticies(): [number, number][] {
+		return this.curveVert;
+	}
+}
+
+export class Triangle extends BaseShape {
+	currentColor: Color;
+	constructor(context: RenderContext, color: Color) {
+		super(context);
+		this.currentColor = color;
+	}
+
+	draw(): void {
+		super.draw();
+		const { gl } = this.context;
+		Object.values(this.context)
+			.filter((e) => e instanceof GLAttribute)
+			.map((e) => e.enable());
+		gl.drawArrays(gl.TRIANGLE_FAN, 0, 3);
+	}
+
+	protected get color(): Color[] {
+		return Array(3).fill(this.currentColor);
+	}
+
+	get joints() {
+		return this.verticies;
+	}
+
+	protected get verticies(): [number, number][] {
+		return [
+			[1, 0],
+			[-0.5, Math.sqrt(3) / 2],
+			[-0.5, -Math.sqrt(3) / 2],
+		];
 	}
 }

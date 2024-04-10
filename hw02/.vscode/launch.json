@@ -12,6 +12,14 @@
             "webRoot": "${workspaceFolder}",
             "runtimeExecutable": "/Applications/Brave Browser.app/Contents/MacOS/Brave Browser",
             "userDataDir": true
+        },
+        {
+            "type": "firefox",
+            "request": "launch",
+            "reAttach": true,
+            "name": "對 localhost 啟動 Firefox",
+            "url": "http://localhost:5173",
+            "webRoot": "${workspaceFolder}"
         }
     ]
 }

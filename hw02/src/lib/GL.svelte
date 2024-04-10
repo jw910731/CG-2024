@@ -34,8 +34,14 @@
 	onMount(async () => {
 		gl = canvasElem.getContext("webgl2")!;
 		scene = new Scene(gl, {vertexShaderSrc: vertexShader, fragmentShaderSrc: fragmentShader});
-		scene.render();
+		update();
 	});
+
+	const update = () => {
+		scene.render();
+		requestAnimationFrame(update);
+	}
+
 </script>
 
 <svelte:window bind:innerHeight bind:innerWidth on:keydown={keyDownHandler} />

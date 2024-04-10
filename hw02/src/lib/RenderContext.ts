@@ -35,6 +35,10 @@ export class Transform {
 		return this.ops.pop();
 	}
 
+	clear() {
+		this.ops.length = 0;
+	}
+
 	getMat(index: number = this.ops.length): Mat3 {
 		const ret = Mat3.create();
 		this.ops.slice(0, index).forEach(({ op, param }) => {
@@ -50,6 +54,7 @@ export interface RenderContext {
 	program: WebGLProgram;
 	sceneOpt: SceneOptions;
 	matUnif: WebGLUniformLocation;
+	globUnif: WebGLUniformLocation;
 	colorAttr: GLAttribute;
 	vertexAttr: GLAttribute;
 }

@@ -1,6 +1,6 @@
 export class Color {
 	private _color = [0, 0, 0, 1];
-	static readonly RED = new Color([1, 0, 0]);
+	static readonly RED = new Color([1, 0, 0, 1]);
 	static readonly GREEN = new Color([0, 1, 0, 1]);
 	static readonly BLUE = new Color([0, 0, 1, 1]);
 	static readonly WHITE = new Color([1, 1, 1, 1]);
