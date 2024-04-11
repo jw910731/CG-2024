@@ -300,10 +300,7 @@ export class Vec2 extends Float32Array {
 
 	/**
 	 * Math.ceil the components of a {@link Vec2}
-	 * @category Static
 	 *
-	 * @param out - The receiving vector
-	 * @param a - Vector to ceil
 	 * @returns `out`
 	 */
 	ceil(): Vec2Like {
@@ -314,10 +311,7 @@ export class Vec2 extends Float32Array {
 
 	/**
 	 * Math.floor the components of a {@link Vec2}
-	 * @category Static
 	 *
-	 * @param out - The receiving vector
-	 * @param a - Vector to floor
 	 * @returns `out`
 	 */
 	floor(): Vec2 {
@@ -328,10 +322,7 @@ export class Vec2 extends Float32Array {
 
 	/**
 	 * Returns the minimum of two {@link Vec2}s
-	 * @category Static
 	 *
-	 * @param out - The receiving vector
-	 * @param a - The first operand
 	 * @param b - The second operand
 	 * @returns `out`
 	 */
@@ -344,10 +335,7 @@ export class Vec2 extends Float32Array {
 
 	/**
 	 * Returns the maximum of two {@link Vec2}s
-	 * @category Static
 	 *
-	 * @param out - The receiving vector
-	 * @param a - The first operand
 	 * @param b - The second operand
 	 * @returns `out`
 	 */
@@ -373,9 +361,7 @@ export class Vec2 extends Float32Array {
 
 	/**
 	 * Calculates the euclidian distance between two {@link Vec2}s
-	 * @category Static
 	 *
-	 * @param a - The first operand
 	 * @param b - The second operand
 	 * @returns distance between `a` and `b`
 	 */
@@ -385,9 +371,7 @@ export class Vec2 extends Float32Array {
 
 	/**
 	 * Calculates the squared euclidian distance between two {@link Vec2}s
-	 * @category Static
 	 *
-	 * @param a - The first operand
 	 * @param b - The second operand
 	 * @returns Squared distance between `a` and `b`
 	 */
@@ -396,38 +380,21 @@ export class Vec2 extends Float32Array {
 		const y = b[1] - this[1];
 		return x * x + y * y;
 	}
-	/**
-	 * Calculates the magnitude (length) of a {@link Vec2}
-	 * @category Static
-	 *
-	 * @param a - Vector to calculate magnitude of
-	 * @returns Magnitude of a
-	 */
-	static magnitude(a: Readonly<Vec2Like>): number {
-		const x = a[0];
-		const y = a[1];
-		return Math.sqrt(x * x + y * y);
-	}
 
 	/**
 	 * Calculates the squared length of a {@link Vec2}
-	 * @category Static
 	 *
-	 * @param a - Vector to calculate squared length of
 	 * @returns Squared length of a
 	 */
-	static squaredLength(a: Readonly<Vec2Like>): number {
-		const x = a[0];
-		const y = a[1];
+	squaredLength(): number {
+		const x = this[0];
+		const y = this[1];
 		return x * x + y * y;
 	}
 
 	/**
 	 * Normalize a {@link Vec2}
-	 * @category Static
 	 *
-	 * @param out - The receiving vector
-	 * @param a - Vector to normalize
 	 * @returns `out`
 	 */
 	normalize(): Vec2Like {
@@ -445,9 +412,7 @@ export class Vec2 extends Float32Array {
 
 	/**
 	 * Calculates the dot product of two {@link Vec2}s
-	 * @category Static
 	 *
-	 * @param a - The first operand
 	 * @param b - The second operand
 	 * @returns Dot product of `a` and `b`
 	 */
@@ -478,19 +443,18 @@ export class Vec2 extends Float32Array {
 	 * @param t - Interpolation amount, in the range [0-1], between the two inputs
 	 * @returns `out`
 	 */
-	static lerp(out: Vec2Like, a: Readonly<Vec2Like>, b: Readonly<Vec2Like>, t: number): Vec2Like {
+	static lerp(a: Readonly<Vec2Like>, b: Readonly<Vec2Like>, t: number): Vec2 {
+		const ret = new Vec2();
 		const ax = a[0];
 		const ay = a[1];
-		out[0] = ax + t * (b[0] - ax);
-		out[1] = ay + t * (b[1] - ay);
-		return out;
+		ret[0] = ax + t * (b[0] - ax);
+		ret[1] = ay + t * (b[1] - ay);
+		return ret;
 	}
 
 	/**
 	 * Rotate a 2D vector
 	 *
-	 * @param out - The receiving {@link Vec2}
-	 * @param a - The {@link Vec2} point to rotate
 	 * @param b - The origin of the rotation
 	 * @param rad - The angle of rotation in radians
 	 * @returns `out`
@@ -530,41 +494,35 @@ export class Vec2 extends Float32Array {
 	}
 
 	/**
-	 * Set the components of a {@link Vec2} to zero
-	 * @category Static
+	 * Set to zero vector
 	 *
-	 * @param out - The receiving vector
-	 * @returns `out`
+	 * @returns ``
 	 */
-	static zero(out: Vec2Like): Vec2Like {
-		out[0] = 0.0;
-		out[1] = 0.0;
-		return out;
+	zero(): Vec2Like {
+		this[0] = 0.0;
+		this[1] = 0.0;
+		return this;
 	}
 
 	/**
 	 * Returns whether or not the vectors have exactly the same elements in the same position (when compared with ===)
-	 * @category Static
 	 *
-	 * @param a - The first vector.
 	 * @param b - The second vector.
 	 * @returns `true` if the vectors components are ===, `false` otherwise.
 	 */
-	static exactEquals(a: Readonly<Vec2Like>, b: Readonly<Vec2Like>): boolean {
-		return a[0] === b[0] && a[1] === b[1];
+	exactEquals(b: Readonly<Vec2Like>): boolean {
+		return this[0] === b[0] && this[1] === b[1];
 	}
 
 	/**
 	 * Returns whether or not the vectors have approximately the same elements in the same position.
-	 * @category Static
 	 *
-	 * @param a - The first vector.
 	 * @param b - The second vector.
 	 * @returns `true` if the vectors are approximately equal, `false` otherwise.
 	 */
-	static equals(a: Readonly<Vec2Like>, b: Readonly<Vec2Like>): boolean {
-		const a0 = a[0];
-		const a1 = a[1];
+	equals(b: Readonly<Vec2Like>): boolean {
+		const a0 = this[0];
+		const a1 = this[1];
 		const b0 = b[0];
 		const b1 = b[1];
 		return (
@@ -575,7 +533,6 @@ export class Vec2 extends Float32Array {
 
 	/**
 	 * Returns a string representation of a vector
-	 * @category Static
 	 *
 	 * @param a - Vector to represent as a string
 	 * @returns String representation of the vector
