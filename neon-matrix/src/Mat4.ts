@@ -1,5 +1,6 @@
 import { EPSILON } from "./common";
 import { Vec3, Vec3Like } from "./Vec3";
+import { Vec4 } from "./Vec4";
 
 /**
  * A 4x4 Matrix given as a {@link Mat4}, a 16-element Float32Array, or an array
@@ -1511,15 +1512,35 @@ export class Mat4 extends Float32Array {
 		return `Mat4(${a.join(", ")})`;
 	}
 
-	transform(a: Readonly<Vec3>): Vec3 {
-		const x = a[0],
-			y = a[1],
-			z = a[2];
-		const w = this[3] * x + this[7] * y + this[11] * z + this[15] || 1.0;
-		const out = new Vec3();
-		out[0] = (this[0] * x + this[4] * y + this[8] * z + this[12]) / w;
-		out[1] = (this[1] * x + this[5] * y + this[9] * z + this[13]) / w;
-		out[2] = (this[2] * x + this[6] * y + this[10] * z + this[14]) / w;
-		return out;
+	transform(a: Readonly<Vec3>): Vec3;
+	transform(a: Readonly<Vec4>): Vec4;
+
+	transform(a: unknown): unknown {
+		if (a instanceof Vec4) {
+			const x = a[0];
+			const y = a[1];
+			const z = a[2];
+			const w = a[3];
+			const out = new Vec4();
+			out[0] = this[0] * x + this[4] * y + this[8] * z + this[12] * w;
+			out[1] = this[1] * x + this[5] * y + this[9] * z + this[13] * w;
+			out[2] = this[2] * x + this[6] * y + this[10] * z + this[14] * w;
+			out[3] = this[3] * x + this[7] * y + this[11] * z + this[15] * w;
+			return out;
+		} else if (a instanceof Vec3) {
+			const x = a[0],
+				y = a[1],
+				z = a[2];
+			const w = this[3] * x + this[7] * y + this[11] * z + this[15] || 1.0;
+			const out = new Vec3();
+			out[0] = (this[0] * x + this[4] * y + this[8] * z + this[12]) / w;
+			out[1] = (this[1] * x + this[5] * y + this[9] * z + this[13]) / w;
+			out[2] = (this[2] * x + this[6] * y + this[10] * z + this[14]) / w;
+			return out;
+		} else {
+			throw TypeError(
+				"Input vector need to be Vec3 or Vec4, tuple or other type is not supported"
+			);
+		}
 	}
 }
