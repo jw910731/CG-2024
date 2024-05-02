@@ -4,12 +4,12 @@ QUIZES = $(shell ls -d quiz*/ | sed 's/\///g' | awk 'NF{print $$0 ".zip"}')
 all: $(QUIZES)
 
 .PHONY:
-quiz%.zip: quiz%
-	git archive HEAD -o $@ $<
+quiz%.zip: quiz% neon-matrix
+	git archive HEAD -o $@ $?
 
 .PHONY:
-hw%.zip: hw%
-	git archive HEAD -o $@ $<
+hw%.zip: hw% neon-matrix
+	git archive HEAD -o $@ $?
 	zip -ur $@ $</build
 
 .PHONY:
