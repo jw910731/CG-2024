@@ -1,92 +1,98 @@
-import { Mat4, Vec3 } from "neon-matrix";
+import { Vec3, type Vec3Like } from "neon-matrix";
 import { Color } from "./Color";
 import { GLAttribute } from "./GLAttribute";
 import type { RenderContext } from "./RenderContext";
 import icomesh from "icomesh";
 
-export abstract class BaseShape {
-	protected context: RenderContext;
-	private modelMat: Mat4 = Mat4.create();
-	private _refreshVertex: boolean = true;
-	constructor(context: RenderContext) {
-		this.context = context;
-	}
-	// prepare basic data
-	private vertexCache: Vec3[] = [];
-	private prevMat = this.mat.clone();
-	draw(): void {
-		if (!this.prevMat.equals(this.mat)) {
-			this._refreshVertex = true;
-			this.prevMat = this.mat.clone();
-		}
-		const { colorAttr, vertexAttr, normalAttr } = this.context;
-		colorAttr.prepareData(this.color, 4);
-		if (this.vertexCache.length <= 0 || this._refreshVertex) {
-			this._refreshVertex = false;
-			this.vertexCache = this.verticies.map((v) => this.mat.transform(new Vec3(v)));
-		}
-		vertexAttr.prepareData(this.vertexCache, 3);
-		normalAttr.prepareData(this.normals, 3);
-	}
-	public get mat(): Mat4 {
-		return this.modelMat;
-	}
+// https://github.com/microsoft/TypeScript/issues/26223#issuecomment-674514787
+// here comes the magic
+type BuildPowersOf2LengthArrays<N extends number, R extends never[][]> = R[0][N] extends never
+	? R
+	: BuildPowersOf2LengthArrays<N, [[...R[0], ...R[0]], ...R]>;
 
-	public get invM(): Mat4 {
-		return this.mat.clone().invert();
-	}
+type ConcatLargestUntilDone<
+	N extends number,
+	R extends never[][],
+	B extends never[],
+> = B["length"] extends N
+	? B
+	: [...R[0], ...B][N] extends never
+		? ConcatLargestUntilDone<
+				N,
+				R extends [R[0], ...infer U] ? (U extends never[][] ? U : never) : never,
+				B
+			>
+		: ConcatLargestUntilDone<
+				N,
+				R extends [R[0], ...infer U] ? (U extends never[][] ? U : never) : never,
+				[...R[0], ...B]
+			>;
 
-	protected get refreshVertex(): boolean {
-		return this._refreshVertex;
-	}
-	protected abstract get color(): Color[];
-	protected abstract get verticies(): Vec3[];
-	protected abstract get normals(): Vec3[];
-	get joints(): Vec3[] {
-		if (this.vertexCache.length <= 0 || this._refreshVertex) {
-			this._refreshVertex = false;
-			this.vertexCache = this.verticies.map((v) => this.mat.transform(new Vec3(v)));
-		}
-		return [this.vertexCache[0], this.vertexCache[this.vertexCache.length - 1]];
-	}
-}
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type Replace<R extends any[], T> = { [K in keyof R]: T };
 
-function chunkArray<T>(array: Array<T>, chunkSize: number): T[][] {
+type TupleOf<T, N extends number> = number extends N
+	? T[]
+	: {
+			[K in N]: BuildPowersOf2LengthArrays<K, [[never]]> extends infer U
+				? U extends never[][]
+					? Replace<ConcatLargestUntilDone<K, U, []>, T>
+					: never
+				: never;
+		}[N];
+
+function chunkArray<T, L extends number>(array: T[], chunkSize: L): TupleOf<T, L>[] {
 	const chunks = [];
 	for (let i = 0; i < array.length; i += chunkSize) {
 		chunks.push(array.slice(i, i + chunkSize));
 	}
-	return chunks;
+	return <TupleOf<T, L>[]>chunks;
+}
+
+export abstract class BaseShape {
+	protected context: RenderContext;
+	constructor(context: RenderContext) {
+		this.context = context;
+	}
+	draw(): void {
+		const { colorAttr, vertexAttr, normalAttr } = this.context;
+		colorAttr.prepareData(this.color, 3);
+		vertexAttr.prepareData(this.vertices, 3);
+		normalAttr.prepareData(this.normals, 3);
+	}
+	protected abstract get color(): Float32Array;
+	protected abstract get vertices(): Float32Array;
+	protected abstract get normals(): Float32Array;
 }
 
 export class Cube extends BaseShape {
 	// prettier-ignore
-	private readonly _vertices = [
+	private readonly _vertices = new Float32Array([
 		1.0, 1.0, 1.0, -1.0, 1.0, 1.0, -1.0, -1.0, 1.0, 1.0, 1.0, 1.0, -1.0, -1.0, 1.0, 1.0, -1.0, 1.0, //front
 		1.0, 1.0, 1.0, 1.0, -1.0, 1.0, 1.0, -1.0, -1.0, 1.0, 1.0, 1.0, 1.0, -1.0, -1.0, 1.0, 1.0, -1.0, //right
 		1.0, 1.0, 1.0, 1.0, 1.0, -1.0, -1.0, 1.0, -1.0, 1.0, 1.0, 1.0, -1.0, 1.0, -1.0, -1.0, 1.0, 1.0, //up
 		-1.0, 1.0, 1.0, -1.0, -1.0, 1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, 1.0, -1.0, -1.0, 1.0, 1.0, //left
 		-1.0, -1.0, 1.0, -1.0, -1.0, -1.0, 1.0, -1.0, -1.0,  1.0, -1.0, -1.0, 1.0, -1.0, 1.0, -1.0, -1.0, 1.0, //bottom
 		1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, 1.0, -1.0, 1.0, -1.0, -1.0, -1.0, 1.0, -1.0, 1.0, 1.0, -1.0 //back
-	];
+	]);
 	// prettier-ignore
-	private readonly colors = [
+	private readonly _color = new Float32Array([
 		1.0, 0.4, 0.4, 1.0, 0.4, 0.4, 1.0, 0.4, 0.4, 1.0, 0.4, 0.4, 1.0, 0.4, 0.4, 1.0, 0.4, 0.4, //front
 		1.0, 0.4, 0.4, 1.0, 0.4, 0.4, 1.0, 0.4, 0.4, 1.0, 0.4, 0.4, 1.0, 0.4, 0.4, 1.0, 0.4, 0.4, //right
 		1.0, 0.4, 0.4, 1.0, 0.4, 0.4, 1.0, 0.4, 0.4, 1.0, 0.4, 0.4, 1.0, 0.4, 0.4, 1.0, 0.4, 0.4, //up
 		1.0, 0.4, 0.4, 1.0, 0.4, 0.4, 1.0, 0.4, 0.4, 1.0, 0.4, 0.4, 1.0, 0.4, 0.4, 1.0, 0.4, 0.4, //left
 		1.0, 0.4, 0.4, 1.0, 0.4, 0.4, 1.0, 0.4, 0.4, 1.0, 0.4, 0.4, 1.0, 0.4, 0.4, 1.0, 0.4, 0.4, //bottom
 		1.0, 0.4, 0.4, 1.0, 0.4, 0.4, 1.0, 0.4, 0.4, 1.0, 0.4, 0.4, 1.0, 0.4, 0.4, 1.0, 0.4, 0.4, //back
-	];
+	]);
 	// prettier-ignore
-	private readonly _normals = [
+	private readonly _normals = new Float32Array([
         0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, //front
         1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, //right
         0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, //up
         -1.0, 0.0, 0.0, -1.0, 0.0, 0.0, -1.0, 0.0, 0.0, -1.0, 0.0, 0.0, -1.0, 0.0, 0.0, -1.0, 0.0, 0.0, //left
         0.0, -1.0, 0.0, 0.0, -1.0, 0.0, 0.0, -1.0, 0.0, 0.0, -1.0, 0.0, 0.0, -1.0, 0.0, 0.0, -1.0, 0.0, //bottom
         0.0, 0.0, -1.0, 0.0, 0.0, -1.0, 0.0, 0.0, -1.0, 0.0, 0.0, -1.0, 0.0, 0.0, -1.0, 0.0, 0.0, -1.0 //back
-    ];
+    ]);
 
 	draw() {
 		super.draw();
@@ -94,53 +100,47 @@ export class Cube extends BaseShape {
 		Object.values(this.context)
 			.filter((e) => e instanceof GLAttribute)
 			.map((e) => e.enable());
-		gl.drawArrays(gl.TRIANGLES, 0, this.verticies.length);
+		gl.drawArrays(gl.TRIANGLES, 0, this._vertices.length / 3);
 	}
 
-	protected get color(): Color[] {
-		const chunkedArray = chunkArray(this.colors, 3).map((e) => new Color([e[0], e[1], e[2]]));
-		return chunkedArray;
+	protected get color(): Float32Array {
+		return this._color;
 	}
-	protected get verticies(): Vec3[] {
-		const chunkedArray = chunkArray(this._vertices, 3).map((e) => new Vec3(...e));
-		return chunkedArray;
+	protected get vertices(): Float32Array {
+		return this._vertices;
 	}
 
-	protected get normals(): Vec3[] {
-		const chunkedArray = chunkArray(this._normals, 3).map((e) => new Vec3(...e));
-		return chunkedArray;
+	protected get normals(): Float32Array {
+		return this._normals;
 	}
 }
 
 export class Sphere extends BaseShape {
-	protected _vertex: Vec3[];
-	protected _normals: Vec3[];
-	protected refColor: Color;
+	protected _vertex: Float32Array;
+	protected _normals: Float32Array;
+	protected _color: Float32Array;
 
 	constructor(context: RenderContext, color: Color = Color.RED) {
 		super(context);
-		this.refColor = color;
-		this._vertex = [];
-		this._normals = [];
-		const { vertices, triangles } = icomesh();
-		const chunkVertex = chunkArray([...vertices.values()], 3);
-		const calcNormal = (p1: Vec3, p2: Vec3, p3: Vec3) => {
-			const A = p2.clone().subtract(p1);
-			const B = p3.clone().subtract(p1);
-			return new Vec3(A.y * B.z - A.z * B.y, A.z * B.x - A.x * B.z, A.x * B.y - A.y * B.x);
+		const { vertices, triangles } = icomesh(5);
+		const chunkVertex = chunkArray([...vertices], 3);
+		const calcNormal = (
+			p1: TupleOf<number, 3>,
+			p2: TupleOf<number, 3>,
+			p3: TupleOf<number, 3>
+		) => {
+			const A = Vec3.fromValues(...p2).subtract(p1);
+			const B = Vec3.fromValues(...p3).subtract(p1);
+			return [A.y * B.z - A.z * B.y, A.z * B.x - A.x * B.z, A.x * B.y - A.y * B.x];
 		};
-
-		chunkArray([...triangles.values()], 3).forEach((ps) => {
-			ps.forEach((p) => {
-				this._vertex.push(new Vec3(...chunkVertex[p]));
-			});
-		});
-		chunkArray(this._vertex, 3).forEach((vs) => {
-			const normals = calcNormal(vs[0], vs[1], vs[2]);
-			for (let i = 0; i < 3; i++) {
-				this._normals.push(normals);
-			}
-		});
+		this._color = new Float32Array(Array(triangles.length).fill([...color]).flat());
+		this._vertex = new Float32Array([...triangles].map((i) => [...chunkVertex[i]]).flat());
+		this._normals = new Float32Array(
+			chunkArray([...triangles].map(i=>chunkVertex[i]), 3).flatMap((v) => {
+				const normals = calcNormal(...v);
+				return [...normals, ...normals, ...normals];
+			})
+		);
 	}
 
 	draw() {
@@ -149,17 +149,16 @@ export class Sphere extends BaseShape {
 		Object.values(this.context)
 			.filter((e) => e instanceof GLAttribute)
 			.map((e) => e.enable());
-		gl.drawArrays(gl.TRIANGLES, 0, this.verticies.length);
+		gl.drawArrays(gl.TRIANGLES, 0, this.vertices.length / 3);
 	}
 
-	protected get color(): Color[] {
-		return Array(this._vertex.length).fill(this.refColor);
+	protected get color(): Float32Array {
+		return this._color;
 	}
-	protected get verticies(): Vec3[] {
+	protected get vertices(): Float32Array {
 		return this._vertex;
 	}
-
-	protected get normals(): Vec3[] {
+	protected get normals(): Float32Array {
 		return this._normals;
 	}
 }

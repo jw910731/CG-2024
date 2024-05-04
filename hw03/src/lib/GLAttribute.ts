@@ -13,15 +13,11 @@ export class GLAttribute {
 		}
 		this.gl = gl;
 	}
-	prepareData<T extends Float32Array>(data: T[], perVertexSize: number) {
+	prepareData(data: Float32Array, perVertexSize: number) {
 		if (data.length <= 0) return;
 		const gl = this.gl;
 		gl.bindBuffer(gl.ARRAY_BUFFER, this.buffer);
-		gl.bufferData(
-			gl.ARRAY_BUFFER,
-			new Float32Array(data.map((e) => [...e.values()]).flat()),
-			gl.STATIC_DRAW
-		);
+		gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
 		this.size = perVertexSize;
 	}
 	enable() {

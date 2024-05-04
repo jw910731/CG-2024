@@ -8,9 +8,9 @@ import { Color } from "./Color";
 export class Scene {
 	gl: WebGL2RenderingContext;
 	context: RenderContext;
-	object: Sphere;
 	lightSrcSphere: Sphere;
 	floor: Cube;
+	object: Sphere;
 
 	private mouseDragging = false;
 	private camera: [number, number, number] = [3, 3, 7];
@@ -40,9 +40,9 @@ export class Scene {
 			shininessUnif: gl.getUniformLocation(program, "u_shininess")!,
 		};
 
-		this.object = new Sphere(this.context);
 		this.lightSrcSphere = new Sphere(this.context, new Color([1, 1, 0]));
 		this.floor = new Cube(this.context);
+		this.object = new Sphere(this.context);
 		gl.enable(gl.DEPTH_TEST);
 	}
 
@@ -109,7 +109,6 @@ export class Scene {
 		// Real draw
 		this.floor.draw();
 
-
 		// Draw Object
 		// transform
 		trans.clear();
@@ -127,7 +126,7 @@ export class Scene {
 		gl.uniformMatrix4fv(this.context.modelMatUnif, false, modelMat);
 		gl.uniformMatrix4fv(this.context.normalMatUnif, false, normalMat);
 		// Real draw
-		this.object.draw();
+		this.object.draw()
 	}
 
 	onMouseDown(ev: MouseEvent) {

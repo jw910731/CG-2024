@@ -8,27 +8,22 @@
 	let canvasElem: HTMLCanvasElement;
 	let gl: WebGL2RenderingContext;
 	let scene: Scene;
-	const whcalc = () =>
+	const whcalc = (w: number, h: number) =>
 		Math.min(
-			Math.floor(innerWidth * devicePixelRatio),
-			Math.floor(innerHeight * devicePixelRatio)
+			Math.floor( w * devicePixelRatio),
+			Math.floor( h * devicePixelRatio)
 		);
 	let devicePixelRatio = 1;
 	let innerWidth = 0,
 		innerHeight = 0;
 
-	let height = whcalc(),
-		width = whcalc();
-	$: (height = whcalc()),
-		(width = whcalc()),
-		(async () => {
-			if (scene && canvasElem) {
-				canvasElem.width = width;
-				canvasElem.height = height;
-				await tick();
-				scene.render();
-			}
-		})();
+	$: {
+		if (scene && canvasElem) {
+			canvasElem.height = whcalc(innerWidth, innerHeight);
+			canvasElem.width = whcalc(innerWidth, innerHeight)
+			scene.render();
+		}
+	};
 	$: mouseDownHandler = scene?scene.onMouseDown.bind(scene):(()=>{});
 	$: mouseUpHandler = scene?scene.onMouseUp.bind(scene):(()=>{});
 	$: mouseMoveHandler = scene?scene.onMouseMove.bind(scene):(()=>{});
@@ -49,8 +44,6 @@
 
 <canvas
 	bind:this={canvasElem}
-	bind:clientHeight={height}
-	bind:clientWidth={width}
 	on:mousedown={mouseDownHandler}
 	on:mouseup={mouseUpHandler}
 	on:mousemove={mouseMoveHandler}
