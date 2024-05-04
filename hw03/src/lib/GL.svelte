@@ -27,6 +27,8 @@
 	$: mouseDownHandler = scene?scene.onMouseDown.bind(scene):(()=>{});
 	$: mouseUpHandler = scene?scene.onMouseUp.bind(scene):(()=>{});
 	$: mouseMoveHandler = scene?scene.onMouseMove.bind(scene):(()=>{});
+	$: keyDownHandler = scene?scene.onKeyDown.bind(scene):(()=>{});
+	$: scrollHandler = scene?scene.onScroll.bind(scene):(()=>{});
 
 	onMount(async () => {
 		gl = canvasElem.getContext("webgl2")!;
@@ -36,15 +38,18 @@
 
 	const update = () => {
 		scene.render();
+		scene.accumulator = (scene.accumulator + 1) % 2147483647;
+		requestAnimationFrame(update);
 	}
 
 </script>
 
-<svelte:window bind:innerHeight bind:innerWidth />
+<svelte:window bind:innerHeight bind:innerWidth  on:keydown={keyDownHandler} />
 
 <canvas
 	bind:this={canvasElem}
 	on:mousedown={mouseDownHandler}
 	on:mouseup={mouseUpHandler}
 	on:mousemove={mouseMoveHandler}
+	on:wheel={scrollHandler}
 />

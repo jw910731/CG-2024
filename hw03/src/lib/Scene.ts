@@ -6,11 +6,24 @@ import { createProgram, type ProgramParams } from "./glutils";
 import { Color } from "./Color";
 
 export class Scene {
+	public accumulator = 0;
+
 	gl: WebGL2RenderingContext;
 	context: RenderContext;
 	lightSrcSphere: Sphere;
 	floor: Cube;
-	object: Sphere;
+	sphereB: Sphere;
+	arm: Cube;
+	sphereG: Sphere;
+
+	private movement = [0, 0];
+	private arm1Angle = 0;
+	private arm2Angle = -24;
+	private arm3Angle = 48;
+	private updObj = Vec3.fromValues(0, 0, 1);
+	private canGrab = false;
+	private grab = false;
+	private distance = Vec3.fromValues(3, 3, 7).magnitude;
 
 	private mouseDragging = false;
 	private camera: [number, number, number] = [3, 3, 7];
@@ -42,13 +55,15 @@ export class Scene {
 
 		this.lightSrcSphere = new Sphere(this.context, new Color([1, 1, 0]));
 		this.floor = new Cube(this.context);
-		this.object = new Sphere(this.context);
+		this.sphereB = new Sphere(this.context, Color.BLUE);
+		this.arm = new Cube(this.context, Color.WHITE);
+		this.sphereG = new Sphere(this.context, Color.GREEN);
+
 		gl.enable(gl.DEPTH_TEST);
 	}
 
 	render() {
 		const { gl, context } = this;
-		const trans = new Transform();
 
 		// View Port
 		gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
@@ -65,68 +80,276 @@ export class Scene {
 		const vpMat = Mat4.create().perspectiveNO((30 / 180) * Math.PI, 1, 1, 100);
 		const viewMat = Mat4.create().lookAt(this.camera, [0, 0, 0], [0, 1, 0]);
 		vpMat.multiply(viewMat);
-		// Draw Light Source
-		// force illuminate light source
-		gl.uniform1f(this.context.kaUnif, 0.8);
-		gl.uniform1f(this.context.kdUnif, 0);
-		gl.uniform1f(this.context.ksUnif, 0);
-		// set model
-		const modelMat = Mat4.create();
-		modelMat.translate(this.lightSrc);
-		modelMat.scale([0.15, 0.15, 0.15]);
-		// calc mat
-		let mvpMat = vpMat.clone();
-		mvpMat.multiply(modelMat);
-		let normalMat = modelMat.clone();
-		normalMat.invert();
-		normalMat.transpose();
-		// set mat and draw
-		gl.uniformMatrix4fv(this.context.mvpMatUnif, false, mvpMat);
-		gl.uniformMatrix4fv(this.context.modelMatUnif, false, modelMat);
-		gl.uniformMatrix4fv(this.context.normalMatUnif, false, normalMat);
-		this.lightSrcSphere.draw();
+		{
+			// Draw Light Source
+			// force illuminate light source
+			gl.uniform1f(this.context.kaUnif, 0.8);
+			gl.uniform1f(this.context.kdUnif, 0);
+			gl.uniform1f(this.context.ksUnif, 0);
+			// set model
+			const modelMat = Mat4.create();
+			modelMat.translate(this.lightSrc);
+			modelMat.scale([0.15, 0.15, 0.15]);
+			// calc mat
+			const mvpMat = vpMat.clone();
+			mvpMat.multiply(modelMat);
+			const normalMat = modelMat.clone();
+			normalMat.invert();
+			normalMat.transpose();
+			// set mat and draw
+			gl.uniformMatrix4fv(this.context.mvpMatUnif, false, mvpMat);
+			gl.uniformMatrix4fv(this.context.modelMatUnif, false, modelMat);
+			gl.uniformMatrix4fv(this.context.normalMatUnif, false, normalMat);
+			this.lightSrcSphere.draw();
+		}
 
 		// Rest illunination parameter
 		gl.uniform1f(this.context.kaUnif, 0.2);
 		gl.uniform1f(this.context.kdUnif, 0.7);
 		gl.uniform1f(this.context.ksUnif, 1.0);
 
-		// Draw floor
-		// transform
-		trans.addOp("translate", [0, -1, 0]);
-		trans.addOp("scale", [2, 0.25, 2]);
+		{
+			// Draw floor
+			// transform
+			const modelMat = Mat4.create();
+			modelMat.translate([0, -1, 0]);
+			modelMat.scale([2, 0.25, 2]);
 
-		// matricies
-		modelMat.set(trans.getMat());
-		mvpMat = vpMat.clone();
-		mvpMat.multiply(modelMat);
-		normalMat = modelMat.clone();
-		normalMat.invert();
-		normalMat.transpose();
-		gl.uniformMatrix4fv(this.context.mvpMatUnif, false, mvpMat);
-		gl.uniformMatrix4fv(this.context.modelMatUnif, false, modelMat);
-		gl.uniformMatrix4fv(this.context.normalMatUnif, false, normalMat);
-		// Real draw
-		this.floor.draw();
+			// matricies
+			const mvpMat = vpMat.clone();
+			mvpMat.multiply(modelMat);
+			const normalMat = modelMat.clone();
+			normalMat.invert();
+			normalMat.transpose();
+			gl.uniformMatrix4fv(this.context.mvpMatUnif, false, mvpMat);
+			gl.uniformMatrix4fv(this.context.modelMatUnif, false, modelMat);
+			gl.uniformMatrix4fv(this.context.normalMatUnif, false, normalMat);
+			// Real draw
+			this.floor.draw();
+		}
 
-		// Draw Object
-		// transform
-		trans.clear();
-		trans.addOp("translate", [0.0, 0.0, -1.0]);
-		trans.addOp("scale", [0.5, 0.5, 0.5]);
+		const trans = new Transform();
+		{
+			// Draw Object
+			// transform
+			const modelMat = Mat4.create();
+			modelMat.scale([0.5, 0.3, 0.75]);
+			trans.addOp("translate", [this.movement[0], -0.25, -1.0 + this.movement[1]]);
 
-		// matricies
-		modelMat.set(trans.getMat());
-		mvpMat = vpMat.clone();
-		mvpMat.multiply(modelMat);
-		normalMat = modelMat.clone();
-		normalMat.invert();
-		normalMat.transpose();
-		gl.uniformMatrix4fv(this.context.mvpMatUnif, false, mvpMat);
-		gl.uniformMatrix4fv(this.context.modelMatUnif, false, modelMat);
-		gl.uniformMatrix4fv(this.context.normalMatUnif, false, normalMat);
-		// Real draw
-		this.object.draw()
+			// matricies
+			const transMat = trans.getMat().multiply(modelMat);
+			const mvpMat = vpMat.clone();
+			mvpMat.multiply(transMat);
+			const normalMat = transMat.clone();
+			normalMat.invert();
+			normalMat.transpose();
+			gl.uniformMatrix4fv(this.context.mvpMatUnif, false, mvpMat);
+			gl.uniformMatrix4fv(this.context.modelMatUnif, false, transMat);
+			gl.uniformMatrix4fv(this.context.normalMatUnif, false, normalMat);
+			// Real draw
+			this.sphereB.draw();
+		}
+
+		{
+			// Draw Object
+			// transform
+			const modelMat = Mat4.create();
+			modelMat.scale(Vec3.fromValues(0.5, 2, 0.5).scale(1 / 4));
+			trans.addOp("rotateX", (this.arm1Angle / 36) * Math.PI);
+			trans.addOp("translate", [0, 0.75, 0]);
+
+			// matricies
+			const transMat = trans.getMat().multiply(modelMat);
+			const mvpMat = vpMat.clone();
+			mvpMat.multiply(transMat);
+			const normalMat = transMat.clone();
+			normalMat.invert();
+			normalMat.transpose();
+			gl.uniformMatrix4fv(this.context.mvpMatUnif, false, mvpMat);
+			gl.uniformMatrix4fv(this.context.modelMatUnif, false, transMat);
+			gl.uniformMatrix4fv(this.context.normalMatUnif, false, normalMat);
+			// Real draw
+			this.arm.draw();
+		}
+		{
+			// Draw Object
+			// transform
+			const modelMat = Mat4.create();
+			modelMat.scale(Vec3.fromValues(0.5, 2, 0.5).scale(1 / 4));
+			trans.addOp("translate", [0, -0.3 + 0.75, 0]);
+			trans.addOp("rotateX", (this.arm2Angle / 36) * Math.PI);
+			trans.addOp("translate", [0, 0.3 - 0.75, 0]);
+
+			// matricies
+			const transMat = trans.getMat().multiply(modelMat);
+			const mvpMat = vpMat.clone();
+			mvpMat.multiply(transMat);
+			const normalMat = transMat.clone();
+			normalMat.invert();
+			normalMat.transpose();
+			gl.uniformMatrix4fv(this.context.mvpMatUnif, false, mvpMat);
+			gl.uniformMatrix4fv(this.context.modelMatUnif, false, transMat);
+			gl.uniformMatrix4fv(this.context.normalMatUnif, false, normalMat);
+			// Real draw
+			this.arm.draw();
+		}
+		{
+			// Draw Object
+			// transform
+			const modelMat = Mat4.create();
+			modelMat.scale(Vec3.fromValues(0.5, 2, 0.5).scale(1 / 4));
+			trans.addOp("translate", [0, -.3, 0]);
+			trans.addOp("rotateX", (this.arm3Angle / 36) * Math.PI);
+			trans.addOp("translate", [0, -.3, 0]);
+
+			// matricies
+			const transMat = trans.getMat().multiply(modelMat);
+			const mvpMat = vpMat.clone();
+			mvpMat.multiply(transMat);
+			const normalMat = transMat.clone();
+			normalMat.invert();
+			normalMat.transpose();
+			gl.uniformMatrix4fv(this.context.mvpMatUnif, false, mvpMat);
+			gl.uniformMatrix4fv(this.context.modelMatUnif, false, transMat);
+			gl.uniformMatrix4fv(this.context.normalMatUnif, false, normalMat);
+			// Real draw
+			this.arm.draw();
+		}
+
+		const grabTrans = new Transform();
+		{
+			// Draw Object
+			trans.addOp("translate", [0, -0.75, 0]);
+			const pt = trans.getMat().transform(Vec3.create());
+			// transform
+			const modelMat = Mat4.create();
+			modelMat.scale([0.25, 0.25, 0.25]);
+			grabTrans.addOp("translate", this.updObj);
+			const transMat = grabTrans.getMat().multiply(modelMat);
+			if (pt.distance(transMat.transform(Vec3.create())) < 0.25) {
+				this.canGrab = true;
+				if (this.grab) {
+					this.updObj = pt;
+				}
+			}
+
+			// matricies
+			const mvpMat = vpMat.clone();
+			mvpMat.multiply(transMat);
+			const normalMat = transMat.clone();
+			normalMat.invert();
+			normalMat.transpose();
+			gl.uniformMatrix4fv(this.context.mvpMatUnif, false, mvpMat);
+			gl.uniformMatrix4fv(this.context.modelMatUnif, false, transMat);
+			gl.uniformMatrix4fv(this.context.normalMatUnif, false, normalMat);
+			// Real draw
+			this.sphereG.draw();
+		}
+
+		{
+			// Draw Object
+			// transform
+			const modelMat = Mat4.create();
+			modelMat.scale([0.25, 0.25, 0.25]);
+			grabTrans.addOp("rotateX", (this.accumulator / 40) * Math.PI);
+			grabTrans.addOp("translate", [0, 1, 0]);
+
+			// matricies
+			const transMat = grabTrans.getMat().multiply(modelMat);
+			const mvpMat = vpMat.clone();
+			mvpMat.multiply(transMat);
+			const normalMat = transMat.clone();
+			normalMat.invert();
+			normalMat.transpose();
+			gl.uniformMatrix4fv(this.context.mvpMatUnif, false, mvpMat);
+			gl.uniformMatrix4fv(this.context.modelMatUnif, false, transMat);
+			gl.uniformMatrix4fv(this.context.normalMatUnif, false, normalMat);
+			// Real draw
+			this.sphereB.draw();
+		}
+
+		{
+			// Draw Object
+			// transform
+			const modelMat = Mat4.create();
+			modelMat.scale([0.25, 0.25, 0.25]);
+			grabTrans.pop();
+			grabTrans.pop();
+			grabTrans.addOp("rotateZ", (this.accumulator / 40) * Math.PI);
+			grabTrans.addOp("translate", [1, 0, 0]);
+
+			// matricies
+			const transMat = grabTrans.getMat().multiply(modelMat);
+			const mvpMat = vpMat.clone();
+			mvpMat.multiply(transMat);
+			const normalMat = transMat.clone();
+			normalMat.invert();
+			normalMat.transpose();
+			gl.uniformMatrix4fv(this.context.mvpMatUnif, false, mvpMat);
+			gl.uniformMatrix4fv(this.context.modelMatUnif, false, transMat);
+			gl.uniformMatrix4fv(this.context.normalMatUnif, false, normalMat);
+			// Real draw
+			this.sphereB.draw();
+		}
+	}
+
+	onKeyDown(ev: KeyboardEvent) {
+		let tag = true;
+		switch (ev.key) {
+			case "=":
+				this.arm1Angle += 1;
+				break;
+			case "-":
+				this.arm1Angle -= 1;
+				break;
+			case "+":
+				this.arm2Angle += 1;
+				break;
+			case "_":
+				this.arm2Angle -= 1;
+				break;
+			case "p":
+				this.arm3Angle += 1;
+				break;
+			case "o":
+				this.arm3Angle -= 1;
+				break;
+			case "w":
+				this.movement[1] += 0.1;
+				break;
+			case "s":
+				this.movement[1] -= 0.1;
+				break;
+			case "a":
+				this.movement[0] += 0.1;
+				break;
+			case "d":
+				this.movement[0] -= 0.1;
+				break;
+			case " ":
+				if (this.canGrab) {
+					this.grab = !this.grab;
+				}
+				break;
+			default:
+				tag = false;
+				break;
+		}
+		if (tag) {
+			ev.preventDefault();
+			this.render();
+		}
+	}
+	onScroll(ev: WheelEvent) {
+		this.distance += ev.deltaY * -0.01;
+		ev.preventDefault();
+		const camDist = Vec3.fromValues(...this.camera).magnitude;
+		this.camera = <[number, number, number]>[
+			...Vec3.fromValues(...this.camera)
+				.scale(this.distance / camDist)
+				.values(),
+		];
+		this.render();
 	}
 
 	onMouseDown(ev: MouseEvent) {
@@ -152,8 +375,10 @@ export class Scene {
 			const dx = factor * (x - this.mouseLast[0]);
 			const dy = factor * (y - this.mouseLast[1]);
 
+			const camDist = Vec3.fromValues(...this.camera).magnitude;
 			this.camera = <[number, number, number]>[
 				...Vec3.fromValues(...this.camera)
+					.scale(this.distance / camDist)
 					.rotateY([0, 0, 0], (dx / 180) * Math.PI)
 					.rotateX([0, 0, 0], (dy / 180) * Math.PI)
 					.values(),

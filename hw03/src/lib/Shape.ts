@@ -76,15 +76,6 @@ export class Cube extends BaseShape {
 		1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, 1.0, -1.0, 1.0, -1.0, -1.0, -1.0, 1.0, -1.0, 1.0, 1.0, -1.0 //back
 	]);
 	// prettier-ignore
-	private readonly _color = new Float32Array([
-		1.0, 0.4, 0.4, 1.0, 0.4, 0.4, 1.0, 0.4, 0.4, 1.0, 0.4, 0.4, 1.0, 0.4, 0.4, 1.0, 0.4, 0.4, //front
-		1.0, 0.4, 0.4, 1.0, 0.4, 0.4, 1.0, 0.4, 0.4, 1.0, 0.4, 0.4, 1.0, 0.4, 0.4, 1.0, 0.4, 0.4, //right
-		1.0, 0.4, 0.4, 1.0, 0.4, 0.4, 1.0, 0.4, 0.4, 1.0, 0.4, 0.4, 1.0, 0.4, 0.4, 1.0, 0.4, 0.4, //up
-		1.0, 0.4, 0.4, 1.0, 0.4, 0.4, 1.0, 0.4, 0.4, 1.0, 0.4, 0.4, 1.0, 0.4, 0.4, 1.0, 0.4, 0.4, //left
-		1.0, 0.4, 0.4, 1.0, 0.4, 0.4, 1.0, 0.4, 0.4, 1.0, 0.4, 0.4, 1.0, 0.4, 0.4, 1.0, 0.4, 0.4, //bottom
-		1.0, 0.4, 0.4, 1.0, 0.4, 0.4, 1.0, 0.4, 0.4, 1.0, 0.4, 0.4, 1.0, 0.4, 0.4, 1.0, 0.4, 0.4, //back
-	]);
-	// prettier-ignore
 	private readonly _normals = new Float32Array([
         0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, //front
         1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, //right
@@ -93,6 +84,16 @@ export class Cube extends BaseShape {
         0.0, -1.0, 0.0, 0.0, -1.0, 0.0, 0.0, -1.0, 0.0, 0.0, -1.0, 0.0, 0.0, -1.0, 0.0, 0.0, -1.0, 0.0, //bottom
         0.0, 0.0, -1.0, 0.0, 0.0, -1.0, 0.0, 0.0, -1.0, 0.0, 0.0, -1.0, 0.0, 0.0, -1.0, 0.0, 0.0, -1.0 //back
     ]);
+	protected _color: Float32Array;
+
+	constructor(context: RenderContext, color: Color = Color.fromValues(1, 0.4, 0.4)) {
+		super(context);
+		this._color = new Float32Array(
+			Array(36)
+				.fill([...color])
+				.flat()
+		);
+	}
 
 	draw() {
 		super.draw();
@@ -133,10 +134,17 @@ export class Sphere extends BaseShape {
 			const B = Vec3.fromValues(...p3).subtract(p1);
 			return [A.y * B.z - A.z * B.y, A.z * B.x - A.x * B.z, A.x * B.y - A.y * B.x];
 		};
-		this._color = new Float32Array(Array(triangles.length).fill([...color]).flat());
+		this._color = new Float32Array(
+			Array(triangles.length)
+				.fill([...color])
+				.flat()
+		);
 		this._vertex = new Float32Array([...triangles].map((i) => [...chunkVertex[i]]).flat());
 		this._normals = new Float32Array(
-			chunkArray([...triangles].map(i=>chunkVertex[i]), 3).flatMap((v) => {
+			chunkArray(
+				[...triangles].map((i) => chunkVertex[i]),
+				3
+			).flatMap((v) => {
 				const normals = calcNormal(...v);
 				return [...normals, ...normals, ...normals];
 			})
