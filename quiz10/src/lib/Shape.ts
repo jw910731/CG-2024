@@ -1,4 +1,4 @@
-import { Mat4, Vec3 } from "neon-matrix";
+import { Vec3 } from "neon-matrix";
 import { Color } from "./Color";
 import { GLAttribute } from "./GLAttribute";
 import type { RenderContext } from "./RenderContext";
@@ -58,7 +58,7 @@ export abstract class BaseShape {
 	}
 	draw(): void {
 		const { colorAttr, vertexAttr, normalAttr } = this.context;
-		colorAttr.prepareData(this.color, 4);
+		colorAttr.prepareData(this.color, 3);
 		vertexAttr.prepareData(this.vertices, 3);
 		normalAttr.prepareData(this.normals, 3);
 	}
@@ -98,8 +98,7 @@ export class Cube extends BaseShape {
 
 	draw() {
 		super.draw();
-		const { gl, colorAttr } = this.context;
-		colorAttr.prepareData(this.color, 3);
+		const { gl } = this.context;
 		Object.values(this.context)
 			.filter((e) => e instanceof GLAttribute)
 			.map((e) => e.enable());
@@ -126,17 +125,28 @@ export class Sphere extends BaseShape {
 	constructor(context: RenderContext, color: Color = Color.RED) {
 		super(context);
 		const { vertices, triangles } = icomesh();
-		const calcNormal = (p1: Vec3, p2: Vec3, p3: Vec3) => {
-			const A = p2.clone().subtract(p1);
-			const B = p3.clone().subtract(p1);
-			return new Vec3(A.y * B.z - A.z * B.y, A.z * B.x - A.x * B.z, A.x * B.y - A.y * B.x);
+		const chunkVertex = chunkArray([...vertices], 3);
+		const calcNormal = (
+			p1: TupleOf<number, 3>,
+			p2: TupleOf<number, 3>,
+			p3: TupleOf<number, 3>
+		) => {
+			const A = Vec3.fromValues(...p2).subtract(p1);
+			const B = Vec3.fromValues(...p3).subtract(p1);
+			return [A.y * B.z - A.z * B.y, A.z * B.x - A.x * B.z, A.x * B.y - A.y * B.x];
 		};
-		this._color = new Float32Array(Array(vertices.length).fill(color));
-		this._vertex = new Float32Array(triangles.map((idx) => vertices[idx]));
+		this._color = new Float32Array(
+			Array(triangles.length)
+				.fill([...color])
+				.flat()
+		);
+		this._vertex = new Float32Array([...triangles].map((i) => [...chunkVertex[i]]).flat());
 		this._normals = new Float32Array(
-			chunkArray([...triangles], 9).flatMap((vs) => {
-				const vecs = chunkArray(vs, 3).map((e) => Vec3.fromValues(...e));
-				const normals = calcNormal(vecs[0], vecs[1], vecs[2]);
+			chunkArray(
+				[...triangles].map((i) => chunkVertex[i]),
+				3
+			).flatMap((v) => {
+				const normals = calcNormal(...v);
 				return [...normals, ...normals, ...normals];
 			})
 		);
@@ -148,7 +158,7 @@ export class Sphere extends BaseShape {
 		Object.values(this.context)
 			.filter((e) => e instanceof GLAttribute)
 			.map((e) => e.enable());
-		gl.drawArrays(gl.TRIANGLES, 0, this.vertices.length);
+		gl.drawArrays(gl.TRIANGLES, 0, this.vertices.length / 3);
 	}
 
 	protected get color(): Float32Array {
