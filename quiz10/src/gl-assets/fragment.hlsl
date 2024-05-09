@@ -8,16 +8,19 @@ uniform float u_Kd;
 uniform float u_Ks;
 uniform float u_shininess;
 
+uniform sampler2D u_shadowMap;
+
+varying vec4 v_posFromLight;
+
+varying vec2 v_texCoord;
 varying vec4 v_normal;
 varying vec4 v_worldPos;
 varying vec4 v_color;
 
-void main(){
-    // let ambient and diffuse color are v_Color 
-    // (you can also input them from ouside and make them different)
+const float deMachThreshold = 0.005; //0.001 if having high precision depth
+void main(){ 
     vec3 ambientLightColor = v_color.rgb;
     vec3 diffuseLightColor = v_color.rgb;
-    // assume white specular light (you can also input it from ouside)
     vec3 specularLightColor = vec3(1.0, 1.0, 1.0);        
 
     ambientLightColor *= u_Ka;
@@ -35,5 +38,13 @@ void main(){
         specular = u_Ks * pow(specAngle, u_shininess) * specularLightColor;
     }
 
-    gl_FragColor = vec4(ambientLightColor + diffuse + specular, 1.0);
+    //***** shadow
+    vec3 shadowCoord = (v_posFromLight.xyz/v_posFromLight.w)/2.0 + 0.5;
+    vec4 rgbaDepth = texture2D(u_shadowMap, shadowCoord.xy);
+    /////////******** LOW precision depth implementation ********///////////
+    float depth = rgbaDepth.r;
+    float visibility = (shadowCoord.z > depth + deMachThreshold) ? 0.3 : 1.0;
+
+    gl_FragColor = vec4( (ambientLightColor + diffuse + specular)*visibility, 1.0);
+    // gl_FragColor = vec4( (ambientLightColor + diffuse + specular), 1.0);
 }

@@ -1,57 +1,60 @@
 <script lang="ts">
 	import { onMount } from "svelte";
-	import vertexShader from "$assets/vertex.hlsl?raw";
-	import fragmentShader from "$assets/fragment.hlsl?raw";
-	import { tick } from "svelte";
 	import { Scene } from "./Scene";
 
 	let canvasElem: HTMLCanvasElement;
 	let gl: WebGL2RenderingContext;
 	let scene: Scene;
-	const whcalc = () =>
+	let renderMode = true;
+	const whcalc = (w: number, h: number) =>
 		Math.min(
-			Math.floor(innerWidth * devicePixelRatio),
-			Math.floor(innerHeight * devicePixelRatio)
+			Math.floor( w * devicePixelRatio),
+			Math.floor( h * devicePixelRatio)
 		);
 	let devicePixelRatio = 1;
 	let innerWidth = 0,
 		innerHeight = 0;
 
-	let height = whcalc(),
-		width = whcalc();
-	$: (height = whcalc()),
-		(width = whcalc()),
-		(async () => {
-			if (scene && canvasElem) {
-				canvasElem.width = width;
-				canvasElem.height = height;
-				await tick();
-				scene.render();
-			}
-		})();
+	$: {
+		if (scene && canvasElem) {
+			const wh = whcalc(innerWidth, innerHeight);
+			canvasElem.height = wh;
+			canvasElem.width = wh;
+			scene.render();
+		}
+	};
 	$: mouseDownHandler = scene?scene.onMouseDown.bind(scene):(()=>{});
 	$: mouseUpHandler = scene?scene.onMouseUp.bind(scene):(()=>{});
 	$: mouseMoveHandler = scene?scene.onMouseMove.bind(scene):(()=>{});
+	$: {
+		if(scene){
+			scene.renderMode = renderMode;
+			scene.render();
+		}
+	};
 
 	onMount(async () => {
 		gl = canvasElem.getContext("webgl2")!;
-		scene = new Scene(gl, {vertexShaderSrc: vertexShader, fragmentShaderSrc: fragmentShader});
-		update();
-	});
-
-	const update = () => {
+		scene = new Scene(gl, renderMode);
 		scene.render();
-	}
-
+	});
 </script>
 
 <svelte:window bind:innerHeight bind:innerWidth />
 
-<canvas
-	bind:this={canvasElem}
-	bind:clientHeight={height}
-	bind:clientWidth={width}
-	on:mousedown={mouseDownHandler}
-	on:mouseup={mouseUpHandler}
-	on:mousemove={mouseMoveHandler}
-/>
+<div style="display:inline-flex;flex-direction: row">
+	<div>
+		<canvas
+			bind:this={canvasElem}
+			on:mousedown={mouseDownHandler}
+			on:mouseup={mouseUpHandler}
+			on:mousemove={mouseMoveHandler}
+		/>
+	</div>
+	<div>
+		<select bind:value={renderMode}>
+			<option value={true}>Normal</option>
+			<option value={false}>Depth</option>
+		</select>
+	</div>
+</div>

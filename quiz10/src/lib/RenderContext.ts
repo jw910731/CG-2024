@@ -57,6 +57,7 @@ export interface RenderContext {
 	mvpMatUnif: WebGLUniformLocation;
 	modelMatUnif: WebGLUniformLocation;
 	normalMatUnif: WebGLUniformLocation;
+	lightMvpUnif: WebGLUniformLocation;
 	colorAttr: GLAttribute;
 	vertexAttr: GLAttribute;
 	normalAttr: GLAttribute;
@@ -67,4 +68,28 @@ export interface RenderContext {
 	kdUnif: WebGLUniformLocation;
 	ksUnif: WebGLUniformLocation;
 	shininessUnif: WebGLUniformLocation;
+	shadowMapUnif: WebGLUniformLocation;
+}
+
+export interface ShadowContext {
+	gl: WebGL2RenderingContext;
+	program: WebGLProgram;
+	// vertex shader
+	mvpMatUnif: WebGLUniformLocation;
+	vertexAttr: GLAttribute;
+}
+
+export interface QuadContext {
+	gl: WebGL2RenderingContext;
+	program: WebGLProgram;
+	// vertex shader
+	vertexAttr: GLAttribute;
+	// fragment shader
+	shadowMapUnif: WebGLUniformLocation;
+}
+
+export interface OffscreenContext {
+	texture: WebGLTexture;
+	depth: WebGLRenderbuffer;
+	framebuf: WebGLFramebuffer;
 }

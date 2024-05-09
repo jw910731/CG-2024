@@ -63,7 +63,7 @@ export abstract class BaseShape {
 		normalAttr.prepareData(this.normals, 3);
 	}
 	protected abstract get color(): Float32Array;
-	protected abstract get vertices(): Float32Array;
+	public abstract get vertices(): Float32Array;
 	protected abstract get normals(): Float32Array;
 }
 
@@ -109,7 +109,7 @@ export class Cube extends BaseShape {
 	protected get color(): Float32Array {
 		return this._color;
 	}
-	protected get vertices(): Float32Array {
+	public get vertices(): Float32Array {
 		return this._vertices;
 	}
 
@@ -165,7 +165,7 @@ export class Sphere extends BaseShape {
 	protected get color(): Float32Array {
 		return this._color;
 	}
-	protected get vertices(): Float32Array {
+	public get vertices(): Float32Array {
 		return this._vertex;
 	}
 	protected get normals(): Float32Array {
@@ -201,7 +201,7 @@ export class ObjShape extends BaseShape {
 		return this._color;
 	}
 
-	protected get vertices(): Float32Array {
+	public get vertices(): Float32Array {
 		return <Float32Array>this.mesh.attributes["POSITION"].value;
 	}
 	protected get normals(): Float32Array {
