@@ -450,7 +450,7 @@ export class Mat4 extends Float32Array {
 	 * @param v - the {@link Vec3} to scale the matrix by
 	 * @returns `out`
 	 **/
-	scale(v: Readonly<Vec3Like>): Mat4Like {
+	scale(v: Readonly<Vec3Like>): Mat4 {
 		const x = v[0];
 		const y = v[1];
 		const z = v[2];
