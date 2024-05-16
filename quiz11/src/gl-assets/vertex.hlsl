@@ -11,12 +11,9 @@ varying vec4 v_normal;
 varying vec4 v_worldPos;
 varying vec4 v_color;
 
-varying vec4 v_posFromLight;
-
 void main() {
     gl_Position = u_mvpMat * a_pos;
     v_worldPos = u_modelMat * a_pos;
     v_normal = u_normalMat * a_normal;
     v_color = a_color;
-    v_posFromLight = u_lightMvpMat * a_pos; // for shadow
 }

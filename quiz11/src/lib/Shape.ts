@@ -51,7 +51,11 @@ function chunkArray<T, L extends number>(array: T[], chunkSize: L): TupleOf<T, L
 	return <TupleOf<T, L>[]>chunks;
 }
 
-export abstract class BaseShape {
+export interface Drawable {
+	draw(): void;
+}
+
+export abstract class BaseShape implements Drawable {
 	protected context: RenderContext;
 	constructor(context: RenderContext) {
 		this.context = context;

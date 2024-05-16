@@ -8,10 +8,6 @@ uniform float u_Kd;
 uniform float u_Ks;
 uniform float u_shininess;
 
-uniform sampler2D u_shadowMap;
-
-varying vec4 v_posFromLight;
-
 varying vec2 v_texCoord;
 varying vec4 v_normal;
 varying vec4 v_worldPos;
@@ -38,13 +34,6 @@ void main(){
         specular = u_Ks * pow(specAngle, u_shininess) * specularLightColor;
     }
 
-    //***** shadow
-    vec3 shadowCoord = (v_posFromLight.xyz/v_posFromLight.w)/2.0 + 0.5;
-    vec4 rgbaDepth = texture2D(u_shadowMap, shadowCoord.xy);
-    /////////******** LOW precision depth implementation ********///////////
-    float depth = rgbaDepth.r;
-    float visibility = (shadowCoord.z > depth + deMachThreshold) ? 0.3 : 1.0;
-
-    gl_FragColor = vec4( (ambientLightColor + diffuse + specular)*visibility, 1.0);
+    gl_FragColor = vec4( (ambientLightColor + diffuse + specular), 1.0);
     // gl_FragColor = vec4( (ambientLightColor + diffuse + specular), 1.0);
 }
