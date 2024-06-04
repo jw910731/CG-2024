@@ -8,15 +8,24 @@ uniform float u_Kd;
 uniform float u_Ks;
 uniform float u_shininess;
 
-varying vec2 v_texCoord;
 varying vec4 v_normal;
 varying vec4 v_worldPos;
-varying vec4 v_color;
+varying vec4 v_color;   // this is texture coord when uniform: u_texture_ena is non-zero
+
+uniform int u_texture_ena;
+uniform sampler2D u_texture;
 
 const float deMachThreshold = 0.005; //0.001 if having high precision depth
 void main(){ 
-    vec3 ambientLightColor = v_color.rgb;
-    vec3 diffuseLightColor = v_color.rgb;
+    vec3 ambientLightColor;
+    vec3 diffuseLightColor;
+    if(u_texture_ena > 0) {
+        ambientLightColor = texture2D(u_texture, v_color.xy).rgb;
+        diffuseLightColor = texture2D(u_texture, v_color.xy).rgb;
+    } else {
+        ambientLightColor = v_color.rgb;
+        diffuseLightColor = v_color.rgb;
+    }
     vec3 specularLightColor = vec3(1.0, 1.0, 1.0);        
 
     ambientLightColor *= u_Ka;
@@ -35,5 +44,4 @@ void main(){
     }
 
     gl_FragColor = vec4( (ambientLightColor + diffuse + specular), 1.0);
-    // gl_FragColor = vec4( (ambientLightColor + diffuse + specular), 1.0);
 }

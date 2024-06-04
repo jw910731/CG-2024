@@ -52,6 +52,16 @@ function chunkArray<T, L extends number>(array: T[], chunkSize: L): TupleOf<T, L
 	return <TupleOf<T, L>[]>chunks;
 }
 
+async function loadImage(url: string): Promise<HTMLImageElement> {
+  return new Promise(resolve => {
+    const image = new Image();
+    image.onload = function() {
+      resolve(image);
+    };
+    image.src = url;
+  })
+}
+
 export interface Drawable {
 	draw(): void;
 }
@@ -130,7 +140,7 @@ export class Sphere extends BaseShape {
 
 	constructor(context: RenderContext, color: Color = Color.RED) {
 		super(context);
-		const { vertices, triangles } = icomesh();
+		const { vertices, triangles } = icomesh(3);
 		const chunkVertex = chunkArray([...vertices], 3);
 		const calcNormal = (
 			p1: TupleOf<number, 3>,
@@ -181,7 +191,6 @@ export class Sphere extends BaseShape {
 export class ObjShape extends BaseShape {
 	mesh?: Mesh;
 	_color?: Float32Array;
-	colorBuf?: WebGLBuffer;
 	constructor(context: RenderContext, uri: string, color: Color = Color.GREEN) {
 		super(context);
 		(async () => {
@@ -189,18 +198,17 @@ export class ObjShape extends BaseShape {
 		})();
 	}
 
-	private async prepare(uri: string, color: Color) {
+	protected async prepare(uri: string, color: Color) {
 		this.mesh = await load(uri, OBJLoader);
 		this._color = new Float32Array(
 			Array(this.mesh.header!.vertexCount)
 				.fill(color)
 				.flatMap((e) => [...e.values()])
 		);
-		this.colorBuf = this.context.gl.createBuffer()!;
 	}
 
 	draw() {
-		if (!this.mesh || !this._color || !this.colorBuf) return;
+		if (!this.mesh || !this._color) return;
 		super.draw();
 		const { gl } = this.context;
 		Object.values(this.context)
@@ -218,5 +226,46 @@ export class ObjShape extends BaseShape {
 	}
 	protected get normals(): Float32Array {
 		return <Float32Array>this.mesh!.attributes["NORMAL"].value;
+	}
+}
+
+export class PortalGun extends ObjShape {
+	textureBuffer: WebGLTexture;
+	constructor(context: RenderContext) {
+		super(context, "portal_gun/portal_gun_packed.obj");
+		this.textureBuffer = context.gl.createTexture()!;
+	}
+	protected async prepare(uri: string) {
+		const {gl} = this.context;
+		this.mesh = await load(uri, OBJLoader);
+		// const rawImg = await(await (await fetch("portal_gun/PortalGun_Albedo.png")).blob()).arrayBuffer();
+		const img = await loadImage("portal_gun/PortalGun_Albedo.png");
+		const rawData = [...this.mesh!.attributes["TEXCOORD_0"].value.values()];
+		this._color = new Float32Array(chunkArray(rawData, 2).flatMap(([u, v]) => [u, v, 0]));
+		gl.bindTexture(gl.TEXTURE_2D, this.textureBuffer);
+		gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1);
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+		gl.texImage2D(
+			gl.TEXTURE_2D,
+			0,
+			gl.RGBA,
+			img.width,
+			img.height,
+			0,
+			gl.RGBA,
+			gl.UNSIGNED_BYTE,
+			img
+		);
+	}
+	draw(): void {
+		if (!this.mesh || !this._color) return;
+		super.draw();
+		const { gl } = this.context;
+		gl.activeTexture(gl.TEXTURE0);
+		gl.bindTexture(gl.TEXTURE_2D, this.textureBuffer);
+		Object.values(this.context)
+			.filter((e) => e instanceof GLAttribute)
+			.map((e) => e.enable());
+		gl.drawArrays(this.mesh.mode, 0, this.mesh.header!.vertexCount);
 	}
 }

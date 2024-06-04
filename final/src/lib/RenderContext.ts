@@ -68,4 +68,6 @@ export interface RenderContext {
 	kdUnif: WebGLUniformLocation;
 	ksUnif: WebGLUniformLocation;
 	shininessUnif: WebGLUniformLocation;
+	textureEnableUnif: WebGLUniformLocation;
+	textureUnif: WebGLUniformLocation;
 }

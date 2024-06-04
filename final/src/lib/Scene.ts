@@ -1,7 +1,7 @@
 import { Mat4, Vec3 } from "neon-matrix";
 import { GLAttribute } from "./GLAttribute";
 import { SceneOptions, type RenderContext } from "./RenderContext";
-import { Cube, ObjShape, Sphere, type Drawable } from "./Shape";
+import { Cube, ObjShape, Sphere, type Drawable, PortalGun } from "./Shape";
 import { createProgram } from "./glutils";
 import vertexShader from "$assets/vertex.hlsl?raw";
 import fragmentShader from "$assets/fragment.hlsl?raw";
@@ -37,6 +37,7 @@ export class Scene {
 	sphere: Sphere;
 	cube: Cube;
 	cubeMap: CubeMap;
+	portalGun: PortalGun;
 
 	private mouseDragging = false;
 	private camera: [number, number, number] = [3, 3, 7];
@@ -67,12 +68,15 @@ export class Scene {
 			kdUnif: gl.getUniformLocation(program, "u_Kd")!,
 			ksUnif: gl.getUniformLocation(program, "u_Ks")!,
 			shininessUnif: gl.getUniformLocation(program, "u_shininess")!,
+			textureEnableUnif: gl.getUniformLocation(program, "u_texture_ena")!,
+			textureUnif: gl.getUniformLocation(program, "u_texture")!,
 		};
 
 		this.mario = new ObjShape(this.context, "mario.obj");
 		this.sonic = new ObjShape(this.context, "sonic.obj", Color.RED);
 		this.sphere = new Sphere(this.context);
 		this.cube = new Cube(this.context);
+		this.portalGun = new PortalGun(this.context);
 		this.cubeMap = new CubeMap(gl, "cubemap");
 	}
 
@@ -105,11 +109,39 @@ export class Scene {
 		gl.uniform1f(this.context.shininessUnif, 10.0);
 
 		// Set illunination parameter
+		gl.uniform1f(this.context.kaUnif, 0.6);
+		gl.uniform1f(this.context.kdUnif, 0.3);
+		gl.uniform1f(this.context.ksUnif, 0.7);
+
+		// draw portal gun
+		gl.uniform1i(this.context.textureEnableUnif, 1);
+		gl.uniform1i(this.context.textureUnif, 0);
+		drawHelper(
+			this.context,
+			Mat4.create()
+				.scale([4, 4, 4])
+				.translate([0.2, -0.3, 0])
+				.rotateX((-60 / 180) * Math.PI)
+				.rotateY((-20 / 180) * Math.PI),
+			Mat4.create(),
+			this.portalGun
+		);
+
+		// Set illunination parameter
 		gl.uniform1f(this.context.kaUnif, 0.2);
 		gl.uniform1f(this.context.kdUnif, 0.7);
 		gl.uniform1f(this.context.ksUnif, 1.0);
 
-		drawHelper(this.context, Mat4.create().translate([0, -1, 0]).scale([10, 0.1, 10]), vpMat, this.cube);
+		// Set texture enable status
+		gl.uniform1i(this.context.textureEnableUnif, 0);
+		gl.uniform1i(this.context.textureUnif, 0);
+
+		drawHelper(
+			this.context,
+			Mat4.create().translate([0, -5, 0]).scale([10, 0.1, 10]),
+			vpMat,
+			this.cube
+		);
 		drawHelper(
 			this.context,
 			Mat4.create()
