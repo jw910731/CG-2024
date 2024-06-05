@@ -41,7 +41,9 @@ export class Scene {
 
 	private mouseDragging = false;
 	private camera: [number, number, number] = [3, 3, 7];
+	private cameraView: [number, number, number] = [3, 3, 7];
 	private lightSrc: [number, number, number] = [0, 2, 3];
+	private thirdView = false;
 	constructor(gl: WebGL2RenderingContext) {
 		this.gl = gl;
 		const program = createProgram(gl, {
@@ -88,8 +90,17 @@ export class Scene {
 
 		// Prepare VP
 		const vpMat = Mat4.create().perspectiveNO((30 / 180) * Math.PI, 1, 1, 100);
-		const viewMat = Mat4.create().lookAt(this.camera, [0, 0, 0], [0, 1, 0]);
-		vpMat.multiply(viewMat);
+		if (!this.thirdView) {
+			const viewMat = Mat4.create().lookAt(
+				this.camera,
+				Vec3.from(this.camera.map((c, i) => c - this.cameraView[i])),
+				[0, 1, 0]
+			);
+			vpMat.multiply(viewMat);
+		} else {
+			const viewMat = Mat4.create().lookAt([6, 6, 7], [0, 0, 0], [0, 1, 0]);
+			vpMat.multiply(viewMat);
+		}
 
 		const lightVpMat = Mat4.create().perspectiveNO((90 / 180) * Math.PI, 1, 1, 10);
 		const lightViewMat = Mat4.create().lookAt(this.lightSrc, [0, 0, 0], [0, 1, 0]);
@@ -114,18 +125,20 @@ export class Scene {
 		gl.uniform1f(this.context.ksUnif, 0.7);
 
 		// draw portal gun
-		gl.uniform1i(this.context.textureEnableUnif, 1);
-		gl.uniform1i(this.context.textureUnif, 0);
-		drawHelper(
-			this.context,
-			Mat4.create()
-				.scale([4, 4, 4])
-				.translate([0.2, -0.3, 0])
-				.rotateX((-60 / 180) * Math.PI)
-				.rotateY((-20 / 180) * Math.PI),
-			Mat4.create(),
-			this.portalGun
-		);
+		if (!this.thirdView) {
+			gl.uniform1i(this.context.textureEnableUnif, 1);
+			gl.uniform1i(this.context.textureUnif, 0);
+			drawHelper(
+				this.context,
+				Mat4.create()
+					.scale([3, 3, 3])
+					.translate([0.3, -0.3, 0])
+					.rotateX((-60 / 180) * Math.PI)
+					.rotateY((-20 / 180) * Math.PI),
+				Mat4.create(),
+				this.portalGun
+			);
+		}
 
 		// Set illunination parameter
 		gl.uniform1f(this.context.kaUnif, 0.2);
@@ -167,6 +180,48 @@ export class Scene {
 		this.cubeMap.draw(vpMat.clone());
 	}
 
+	onKeyDown(ev: KeyboardEvent) {
+		const normView = [...new Vec3(this.cameraView).normalize().values()];
+		const sideDir = [...new Vec3(this.cameraView).cross([0, 1, 0]).normalize()];
+		switch (ev.key) {
+			case "w":
+				this.camera = [
+					this.camera[0] - normView[0],
+					this.camera[1],
+					this.camera[2] - normView[2],
+				];
+				break;
+			case "s":
+				this.camera = [
+					this.camera[0] + normView[0],
+					this.camera[1],
+					this.camera[2] + normView[2],
+				];
+				break;
+			case "a":
+				this.camera = [
+					this.camera[0] + sideDir[0],
+					this.camera[1],
+					this.camera[2] + sideDir[2],
+				];
+				break;
+			case "d":
+				this.camera = [
+					this.camera[0] - sideDir[0],
+					this.camera[1],
+					this.camera[2] - sideDir[2],
+				];
+				break;
+			case "q":
+				break;
+			case "e":
+				break;
+			case "F5":
+				this.thirdView = !this.thirdView;
+				break;
+		}
+	}
+
 	onMouseDown(ev: MouseEvent) {
 		// if (!this.renderMode) return;
 		const x = ev.clientX;
@@ -174,13 +229,8 @@ export class Scene {
 		const rect = (<HTMLCanvasElement>ev.target!).getBoundingClientRect();
 		if (rect.left <= x && x < rect.right && rect.top <= y && y < rect.bottom) {
 			this.mouseLast = [x, y];
-			this.mouseDragging = true;
 		}
 		this.render();
-	}
-	onMouseUp() {
-		// if (!this.renderMode) return;
-		this.mouseDragging = false;
 	}
 
 	private mouseLast = [0, 0];
@@ -188,18 +238,16 @@ export class Scene {
 		// if (!this.renderMode) return;
 		const x = ev.clientX;
 		const y = ev.clientY;
-		if (this.mouseDragging) {
-			const factor = 100 / this.gl.canvas.height; //100 determine the spped you rotate the object
-			const dx = factor * (x - this.mouseLast[0]);
-			const dy = factor * (y - this.mouseLast[1]);
+		const factor = 1 / 3;
+		const dx = factor * (x - this.mouseLast[0]);
+		const dy = factor * (y - this.mouseLast[1]);
 
-			this.camera = <[number, number, number]>[
-				...Vec3.fromValues(...this.camera)
-					.rotateY([0, 0, 0], (dx / 180) * Math.PI)
-					.rotateX([0, 0, 0], (dy / 180) * Math.PI)
-					.values(),
-			];
-		}
+		this.cameraView = <[number, number, number]>[
+			...Mat4.create()
+				.rotate((Math.sqrt(dx * dx + dy * dy) / 180) * Math.PI, [-dy, -dx, 0])
+				.transform(Vec3.fromValues(...this.cameraView))
+				.values(),
+		];
 		this.mouseLast = [x, y];
 		this.render();
 	}
