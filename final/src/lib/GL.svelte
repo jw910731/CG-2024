@@ -51,7 +51,7 @@
 	</div>
 	<div>
 		<p><b>Move Mouse</b> to look around.</p>
+		<p><b>W, A, S, D</b> to move around.</p>
 		<p><b>F5</b> to switch between third and first person view.</p>
-		<p></p>
 	</div>
 </div>

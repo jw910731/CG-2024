@@ -23,8 +23,13 @@ void main(){
         ambientLightColor = texture2D(u_texture, v_color.xy).rgb;
         diffuseLightColor = texture2D(u_texture, v_color.xy).rgb;
     } else {
-        ambientLightColor = v_color.rgb;
-        diffuseLightColor = v_color.rgb;
+        if(abs(v_color.r + 1.0) < 1e-5) {
+            gl_FragColor = texture2D(u_texture, vec2(-v_color.z - 1.0, v_color.y + 1.0) / 2.0);
+        return;
+        } else {
+            ambientLightColor = v_color.rgb;
+            diffuseLightColor = v_color.rgb;
+        }
     }
     vec3 specularLightColor = vec3(1.0, 1.0, 1.0);        
 

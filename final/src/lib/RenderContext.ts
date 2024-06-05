@@ -71,3 +71,9 @@ export interface RenderContext {
 	textureEnableUnif: WebGLUniformLocation;
 	textureUnif: WebGLUniformLocation;
 }
+
+export interface OffscreenContext {
+	texture: WebGLTexture;
+	depth: WebGLRenderbuffer;
+	framebuf: WebGLFramebuffer;
+}

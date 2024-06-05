@@ -4,7 +4,7 @@ import { GLAttribute } from "./GLAttribute";
 import type { RenderContext } from "./RenderContext";
 import icomesh from "icomesh";
 import { OBJLoader } from "@loaders.gl/obj";
-import type { Mesh } from "@loaders.gl/schema";
+import { Float32, type Mesh } from "@loaders.gl/schema";
 import { load } from "@loaders.gl/core";
 
 // https://github.com/microsoft/TypeScript/issues/26223#issuecomment-674514787
@@ -53,13 +53,13 @@ function chunkArray<T, L extends number>(array: T[], chunkSize: L): TupleOf<T, L
 }
 
 async function loadImage(url: string): Promise<HTMLImageElement> {
-  return new Promise(resolve => {
-    const image = new Image();
-    image.onload = function() {
-      resolve(image);
-    };
-    image.src = url;
-  })
+	return new Promise((resolve) => {
+		const image = new Image();
+		image.onload = function () {
+			resolve(image);
+		};
+		image.src = url;
+	});
 }
 
 export interface Drawable {
@@ -236,7 +236,7 @@ export class PortalGun extends ObjShape {
 		this.textureBuffer = context.gl.createTexture()!;
 	}
 	protected async prepare(uri: string) {
-		const {gl} = this.context;
+		const { gl } = this.context;
 		this.mesh = await load(uri, OBJLoader);
 		// const rawImg = await(await (await fetch("portal_gun/PortalGun_Albedo.png")).blob()).arrayBuffer();
 		const img = await loadImage("portal_gun/PortalGun_Albedo.png");
@@ -267,5 +267,44 @@ export class PortalGun extends ObjShape {
 			.filter((e) => e instanceof GLAttribute)
 			.map((e) => e.enable());
 		gl.drawArrays(this.mesh.mode, 0, this.mesh.header!.vertexCount);
+	}
+}
+
+export class Portal extends BaseShape {
+
+	// prettier-ignore
+	private readonly vert_data = [
+		1.0, 1.0, 1.0, 1.0, -1.0, 1.0, 1.0, -1.0, -1.0, 1.0, 1.0, 1.0, 1.0, -1.0, -1.0, 1.0, 1.0, -1.0, //right
+	];
+	private readonly _vertices = new Float32Array(this.vert_data);
+	// prettier-ignore
+	private readonly _normals = new Float32Array([
+        1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, //right
+    ]);
+	protected _color: Float32Array;
+
+	constructor(context: RenderContext) {
+		super(context);
+		this._color = new Float32Array(chunkArray(this.vert_data, 3).flatMap(([x, y, z]) => [-1, y, z]));
+	}
+
+	draw() {
+		super.draw();
+		const { gl } = this.context;
+		Object.values(this.context)
+			.filter((e) => e instanceof GLAttribute)
+			.map((e) => e.enable());
+		gl.drawArrays(gl.TRIANGLES, 0, this._vertices.length / 3);
+	}
+
+	protected get color(): Float32Array {
+		return this._color;
+	}
+	public get vertices(): Float32Array {
+		return this._vertices;
+	}
+
+	protected get normals(): Float32Array {
+		return this._normals;
 	}
 }
