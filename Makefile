@@ -13,5 +13,11 @@ hw%.zip: hw% neon-matrix
 	zip -ur $@ $</build
 
 .PHONY:
+final.zip: final neon-matrix
+	git archive HEAD -o $@ $?
+	zip -ur $@ $</build
+
+
+.PHONY:
 clean:
 	rm -rf *.zip
